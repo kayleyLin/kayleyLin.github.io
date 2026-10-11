@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>0/1 Knapsack · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">0/1 Knapsack</span>
+    <span class="algo-category">Dynamic Programming</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Packing a suitcase with a weight limit, what combination of items gives the most value?</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">for i in range(1, n+1):</span>
+          <span class="code-line">  for w in range(0, W+1):</span>
+          <span class="code-line">    if items[i].weight &gt; w:</span>
+          <span class="code-line">      dp[i][w] = dp[i-1][w]        // can't include</span>
+          <span class="code-line">    else:</span>
+          <span class="code-line">      dp[i][w] = max(dp[i-1][w], items[i].val + dp[i-1][w-wt])</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(nW)</strong>, pseudo-polynomial. Fast when capacity W is small; impractical when W is huge.</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(nW)</strong> for 2D table, reducible to <strong>O(W)</strong> using a single rolling 1D array</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Optimal substructure: the best solution for capacity W using items 1..i contains the best solution for a smaller subproblem. Each item is a binary choice: include or exclude.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Resource allocation, investment portfolio selection, cargo loading, cutting stock problems, any scenario with a budget and items of varying weight/value.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>This problem is NP-Hard in general. O(nW) only works because W is treated as a numeric value, not its bit-length. For large W, approximation algorithms are needed.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    /* ── Problem data ── */
+    const items = [
+      { name: 'Book',   w: 2, v: 3 },
+      { name: 'Camera', w: 3, v: 4 },
+      { name: 'Laptop', w: 4, v: 5 },
+      { name: 'Phone',  w: 1, v: 2 },
+      { name: 'Watch',  w: 2, v: 4 },
+    ];
+    const CAP = 6;          // knapsack capacity
+    const N   = items.length;
+
+    /* ── Build DP table ── */
+    // dp[i][w]: rows 0..N, cols 0..CAP
+    const dp = Array.from({ length: N + 1 }, () => new Array(CAP + 1).fill(0));
+
+    /* ── Build steps ── */
+    function buildSteps() {
+      const steps = [];
+      // snapshot helper, deep copy dp at this moment
+      function snap() { return dp.map(r => r.slice()); }
+
+      steps.push({
+        desc: 'Start: dp[0][w] = 0 for all w (no items → no value). We will fill row by row.',
+        lines: [],
+        table: snap(),
+        activeCell: null,
+        traceBack: null,
+      });
+
+      for (let i = 1; i <= N; i++) {
+        const item = items[i - 1];
+        for (let w = 0; w <= CAP; w++) {
+          if (item.w > w) {
+            // can't include item
+            dp[i][w] = dp[i - 1][w];
+            steps.push({
+              desc: `Row ${i} (${item.name}, wt=${item.w}, val=${item.v}), cap=${w}: item too heavy (${item.w} > ${w}), carry forward dp[${i-1}][${w}] = ${dp[i][w]}.`,
+              lines: [0, 1, 2, 3],
+              table: snap(),
+              activeCell: [i, w],
+              fromCell: [i - 1, w],
+              traceBack: null,
+            });
+          } else {
+            const skip    = dp[i - 1][w];
+            const include = item.v + dp[i - 1][w - item.w];
+            dp[i][w] = Math.max(skip, include);
+            const chose = include >= skip ? 'include' : 'skip';
+            steps.push({
+              desc: `Row ${i} (${item.name}), cap=${w}: skip=${skip}, include=${item.v}+dp[${i-1}][${w - item.w}]=${include}. Choose ${chose} → dp[${i}][${w}]=${dp[i][w]}.`,
+              lines: [0, 1, 4, 5],
+              table: snap(),
+              activeCell: [i, w],
+              fromCell: [i - 1, w],
+              altCell: [i - 1, w - item.w],
+              traceBack: null,
+            });
+          }
+        }
+      }
+
+      /* Traceback */
+      steps.push({
+        desc: `Table complete! dp[${N}][${CAP}] = ${dp[N][CAP]} is the maximum value. Now tracing back to find which items were selected…`,
+        lines: [],
+        table: snap(),
+        activeCell: null,
+        traceBack: null,
+        traceStart: true,
+      });
+
+      // trace path
+      const tracePath = [];
+      let tw = CAP;
+      for (let i = N; i >= 1; i--) {
+        if (dp[i][tw] !== dp[i - 1][tw]) {
+          tracePath.push([i, tw]);
+          const item = items[i - 1];
+          tw -= item.w;
+          steps.push({
+            desc: `Traceback: dp[${i}][${tw + item.w}] ≠ dp[${i-1}][${tw + item.w}] → ${item.name} (wt=${item.w}, val=${item.v}) was included! Move to dp[${i-1}][${tw}].`,
+            lines: [],
+            table: snap(),
+            activeCell: [i, tw + item.w],
+            traceBack: tracePath.slice(),
+            selectedItems: items.filter((_, idx) => tracePath.some(([r]) => r === idx + 1)),
+          });
+        } else {
+          steps.push({
+            desc: `Traceback: dp[${i}][${tw}] = dp[${i-1}][${tw}] → ${items[i-1].name} was NOT included. Move up.`,
+            lines: [],
+            table: snap(),
+            activeCell: [i, tw],
+            traceBack: tracePath.slice(),
+          });
+        }
+      }
+
+      const selectedNames = tracePath.map(([r]) => items[r - 1].name).reverse().join(', ');
+      steps.push({
+        desc: `Done! Optimal items: ${selectedNames || 'none'}. Maximum value = ${dp[N][CAP]} within weight ${CAP}.`,
+        lines: [],
+        table: snap(),
+        activeCell: null,
+        traceBack: tracePath.slice(),
+        done: true,
+      });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Layout constants (computed in draw) ── */
+    const ROWS = N + 1;   // 0..N
+    const COLS = CAP + 1; // 0..CAP
+
+    function draw(ctx, step, W, H) {
+      if (!step) return;
+
+      /* ── Sizing ── */
+      const LABEL_W  = 62;   // left label column width
+      const HEADER_H = 36;   // top header row height
+      const PAD_TOP  = 20;
+      const PAD_BOT  = 32;
+      const PAD_LEFT = 14;
+
+      const availW = W - PAD_LEFT - LABEL_W - 12;
+      const availH = H - PAD_TOP - HEADER_H - PAD_BOT;
+      const cellW  = Math.min(62, Math.floor(availW / COLS));
+      const cellH  = Math.min(46, Math.floor(availH / ROWS));
+
+      const gridW  = cellW * COLS;
+      const gridH  = cellH * ROWS;
+      const startX = PAD_LEFT + LABEL_W;
+      const startY = PAD_TOP + HEADER_H;
+      // centre vertically
+      const offsetY = Math.max(0, (H - PAD_TOP - HEADER_H - PAD_BOT - gridH) / 2);
+
+      const table     = step.table     || dp.map(r => r.slice());
+      const active    = step.activeCell;    // [i, w]
+      const fromCell  = step.fromCell;
+      const altCell   = step.altCell;
+      const traceback = step.traceBack;     // [[i,w],…]
+
+      /* helper: cell rect */
+      function cellRect(i, w) {
+        return {
+          x: startX + w * cellW,
+          y: startY + offsetY + i * cellH,
+          w: cellW,
+          h: cellH,
+        };
+      }
+
+      /* ── Column headers (capacity values 0..6) ── */
+      for (let w = 0; w <= CAP; w++) {
+        const r = cellRect(0, w);
+        centreText(ctx, `${w}`, r.x + cellW / 2, PAD_TOP + HEADER_H / 2, {
+          font: '11px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.5)',
+        });
+      }
+      centreText(ctx, 'Cap→', startX - cellW * 0.1, PAD_TOP + HEADER_H / 2, {
+        font: '10px "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.45)',
+      });
+
+      /* ── Row labels ── */
+      // Row 0
+      centreText(ctx, '∅', PAD_LEFT + LABEL_W / 2, startY + offsetY + cellH / 2, {
+        font: '12px "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.4)',
+      });
+      for (let i = 1; i <= N; i++) {
+        const cy = startY + offsetY + i * cellH + cellH / 2;
+        ctx.fillStyle = 'rgba(28,26,22,0.58)';
+        ctx.font = 'bold 10px "Newsreader", Georgia, serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(items[i - 1].name, PAD_LEFT + LABEL_W - 8, cy);
+        ctx.fillStyle = 'rgba(28,26,22,0.45)';
+        ctx.font = '9px SF Mono, monospace';
+        ctx.fillText(`w=${items[i-1].w} v=${items[i-1].v}`, PAD_LEFT + LABEL_W - 8, cy + 11);
+      }
+
+      /* ── Cells ── */
+      for (let i = 0; i <= N; i++) {
+        for (let w = 0; w <= CAP; w++) {
+          const r = cellRect(i, w);
+          const isActive = active && active[0] === i && active[1] === w;
+          const isFrom   = fromCell && fromCell[0] === i && fromCell[1] === w;
+          const isAlt    = altCell  && altCell[0]  === i && altCell[1]  === w;
+          const inTrace  = traceback && traceback.some(([ti, tw]) => ti === i && tw === w);
+
+          let fillColor   = 'rgba(28,26,22,0.06)';
+          let strokeColor = 'rgba(28,26,22,0.14)';
+          let strokeW     = 1;
+          let textColor   = 'rgba(28,26,22,0.38)';
+
+          if (isActive) {
+            fillColor   = 'rgba(151,113,26,0.14)';
+            strokeColor = C.yellow;
+            strokeW     = 2;
+            textColor   = C.yellow;
+          } else if (inTrace) {
+            fillColor   = 'rgba(75,107,78,0.12)';
+            strokeColor = C.green;
+            strokeW     = 2;
+            textColor   = C.green;
+          } else if (isFrom) {
+            fillColor   = 'rgba(84,98,107,0.12)';
+            strokeColor = C.blue;
+            strokeW     = 1.5;
+            textColor   = C.blue;
+          } else if (isAlt) {
+            fillColor   = 'rgba(192,112,58,0.12)';
+            strokeColor = C.orange;
+            strokeW     = 1.5;
+            textColor   = C.orange;
+          } else if (table[i][w] > 0 || i === 0) {
+            fillColor   = 'rgba(28,26,22,0.11)';
+            strokeColor = 'rgba(28,26,22,0.16)';
+            textColor   = 'rgba(28,26,22,0.75)';
+          }
+
+          // fill
+          ctx.fillStyle = fillColor;
+          roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4);
+          ctx.fill();
+
+          // stroke
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth   = strokeW;
+          roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4);
+          ctx.stroke();
+
+          // value text
+          const val = table[i][w];
+          if (val > 0 || i === 0) {
+            centreText(ctx, `${val}`, r.x + r.w / 2, r.y + r.h / 2, {
+              font: `bold 13px SF Mono, monospace`,
+              color: textColor,
+            });
+          }
+        }
+      }
+
+      /* ── Recurrence formula badge ── */
+      const formula = 'dp[i][w] = max(dp[i-1][w],  val[i] + dp[i-1][w-wt[i]])';
+      ctx.fillStyle = 'rgba(28,26,22,0.06)';
+      roundRect(ctx, PAD_LEFT, H - PAD_BOT + 4, W - PAD_LEFT * 2, 22, 5);
+      ctx.fill();
+      centreText(ctx, formula, W / 2, H - PAD_BOT + 15, {
+        font: '9.5px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.42)',
+      });
+
+      /* ── Answer badge ── */
+      if (step.done || (traceback && traceback.length > 0)) {
+        const ans = table[N][CAP];
+        ctx.fillStyle = 'rgba(75,107,78,0.15)';
+        roundRect(ctx, W - 130, PAD_TOP, 118, 26, 6);
+        ctx.fill();
+        ctx.strokeStyle = C.green;
+        ctx.lineWidth = 1;
+        roundRect(ctx, W - 130, PAD_TOP, 118, 26, 6);
+        ctx.stroke();
+        centreText(ctx, `Max value = ${ans}`, W - 71, PAD_TOP + 13, {
+          font: '11px "Newsreader", Georgia, serif',
+          color: C.green,
+        });
+      }
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

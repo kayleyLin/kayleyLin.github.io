@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Merge Sort · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Merge Sort</span>
+    <span class="algo-category">Recursion &amp; D&amp;C</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Split a deck in half, sort each half, then merge them back like shuffling two sorted piles.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function mergeSort(arr, l, r):</span>
+          <span class="code-line">  if l &gt;= r: return</span>
+          <span class="code-line">  mid = (l + r) / 2</span>
+          <span class="code-line">  mergeSort(arr, l, mid)     // sort left</span>
+          <span class="code-line">  mergeSort(arr, mid+1, r)   // sort right</span>
+          <span class="code-line">  merge(arr, l, mid, r)      // merge halves</span>
+          <span class="code-line">function merge(arr, l, mid, r):</span>
+          <span class="code-line">  // compare and combine sorted subarrays</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(n log n)</strong> always, no worst case. Splitting costs O(log n) levels; merging costs O(n) per level.</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(n)</strong>, requires an auxiliary array for the merge step. Not in-place.</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Splitting is trivial, all the real work happens in the merge step. Two sorted arrays can be merged in O(n) by comparing front elements one at a time.</li>
+          <li class="insight insight-when"><strong>When to use</strong>When stability matters (equal elements keep original order), or when sorting data on disk (external merge sort). Guaranteed O(n log n) unlike quicksort.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Requires O(n) extra memory. For in-place sorting where memory is constrained, quicksort is preferred despite its worst-case risk.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    const INIT = [38, 27, 43, 3, 9, 82, 10, 15];
+    const N = INIT.length;
+    const MAX_VAL = Math.max(...INIT);
+
+    /* ── Step builder ──────────────────────────────────────────
+       Each step carries:
+         arr        : current snapshot of the working array
+         activeL/R  : the range [l..r] currently being processed
+         mergeL/R   : left and right sub-ranges during a merge
+         mergeDone  : indices that have been placed into final positions this merge
+         phase      : 'split' | 'merge' | 'done'
+         lines      : pseudocode line indices to highlight
+         depth      : recursion depth (0 = top)
+         desc       : human-readable description
+    ──────────────────────────────────────────────────────────── */
+    function buildSteps() {
+      const steps = [];
+      const arr = INIT.slice();
+
+      function snap(overrides) {
+        steps.push(Object.assign({
+          arr: arr.slice(),
+          activeL: -1,
+          activeR: -1,
+          mergeL: -1,
+          mergeR: -1,
+          midIdx: -1,
+          comparingA: -1,
+          comparingB: -1,
+          sortedTo: -1,          // everything >= this index is fully sorted
+          phase: 'split',
+          lines: [],
+          depth: 0
+        }, overrides));
+      }
+
+      // Track which indices are in their globally correct final position.
+      // We'll compute this at the end, for now we track via a sorted set
+      // updated after each full merge at the top level.
+      const fullyPlaced = new Set();
+
+      function mergeSort(l, r, depth) {
+        if (l >= r) {
+          snap({ activeL: l, activeR: r, phase: 'split', depth,
+                 lines: [1], desc: `Base case: single element [${arr[l]}] at index ${l}, already sorted.` });
+          return;
+        }
+
+        snap({ activeL: l, activeR: r, phase: 'split', depth,
+               lines: [0, 2], desc: `Split [${l}..${r}]: divide into two halves.` });
+
+        const mid = Math.floor((l + r) / 2);
+
+        snap({ activeL: l, activeR: r, midIdx: mid, phase: 'split', depth,
+               lines: [2, 3], desc: `Left half [${l}..${mid}], right half [${mid+1}..${r}]. Recursing left.` });
+
+        mergeSort(l, mid, depth + 1);
+
+        snap({ activeL: l, activeR: r, midIdx: mid, phase: 'split', depth,
+               lines: [4], desc: `Left half [${l}..${mid}] sorted. Now recurse right half [${mid+1}..${r}].` });
+
+        mergeSort(mid + 1, r, depth + 1);
+
+        snap({ activeL: l, activeR: r, midIdx: mid, phase: 'merge', depth,
+               lines: [5, 6], desc: `Both halves ready. Merging [${l}..${mid}] and [${mid+1}..${r}].` });
+
+        merge(l, mid, r, depth);
+
+        // After merging, mark all positions in [l..r] as placed
+        for (let k = l; k <= r; k++) fullyPlaced.add(k);
+        snap({ activeL: l, activeR: r, phase: 'done', depth,
+               lines: [5],
+               placedSet: new Set(fullyPlaced),
+               desc: `Merged [${l}..${r}] → [${arr.slice(l, r + 1).join(', ')}].` });
+      }
+
+      function merge(l, mid, r, depth) {
+        const left  = arr.slice(l, mid + 1);
+        const right = arr.slice(mid + 1, r + 1);
+        let i = 0, j = 0, k = l;
+
+        while (i < left.length && j < right.length) {
+          const idxA = l + i;
+          const idxB = mid + 1 + j;
+          snap({ activeL: l, activeR: r, midIdx: mid, phase: 'merge', depth,
+                 comparingA: idxA, comparingB: idxB,
+                 mergePos: k,
+                 lines: [7],
+                 desc: `Compare arr[${idxA}]=${left[i]} vs arr[${idxB}]=${right[j]}. Pick smaller: ${Math.min(left[i], right[j])}.` });
+          if (left[i] <= right[j]) {
+            arr[k++] = left[i++];
+          } else {
+            arr[k++] = right[j++];
+          }
+          snap({ activeL: l, activeR: r, midIdx: mid, phase: 'merge', depth,
+                 mergePos: k - 1,
+                 lines: [7],
+                 placedInMerge: new Set(range(l, k)),
+                 desc: `Placed ${arr[k-1]} at position ${k-1}.` });
+        }
+        while (i < left.length) {
+          arr[k++] = left[i++];
+          snap({ activeL: l, activeR: r, midIdx: mid, phase: 'merge', depth,
+                 mergePos: k - 1,
+                 lines: [7],
+                 placedInMerge: new Set(range(l, k)),
+                 desc: `Copy remaining left element ${arr[k-1]} to position ${k-1}.` });
+        }
+        while (j < right.length) {
+          arr[k++] = right[j++];
+          snap({ activeL: l, activeR: r, midIdx: mid, phase: 'merge', depth,
+                 mergePos: k - 1,
+                 lines: [7],
+                 placedInMerge: new Set(range(l, k)),
+                 desc: `Copy remaining right element ${arr[k-1]} to position ${k-1}.` });
+        }
+      }
+
+      function range(a, b) {
+        const r = [];
+        for (let i = a; i < b; i++) r.push(i);
+        return r;
+      }
+
+      // Initial snapshot
+      snap({ lines: [0], desc: 'Starting Merge Sort on [38, 27, 43, 3, 9, 82, 10, 15].' });
+
+      mergeSort(0, N - 1, 0);
+
+      snap({ phase: 'done', lines: [], placedSet: new Set(range(0, N)),
+             desc: 'Array fully sorted! Merge Sort complete, O(n log n) guaranteed.' });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw function ─────────────────────────────────────────── */
+    function draw(ctx, step, W, H) {
+      const PAD_L = 36, PAD_R = 24, PAD_TOP = 56, PAD_BOT = 60;
+      const barAreaW = W - PAD_L - PAD_R;
+      const barAreaH = H - PAD_TOP - PAD_BOT;
+      const barW     = barAreaW / N;
+      const slotW    = barW * 0.72;
+      const slotOff  = (barW - slotW) / 2;
+
+      // Determine bar color for each index
+      function barColor(i) {
+        const { phase, activeL, activeR, midIdx,
+                comparingA, comparingB, mergePos,
+                placedInMerge, placedSet } = step;
+
+        // Fully sorted globally
+        if (placedSet && placedSet.has(i) && phase === 'done') return C.green;
+
+        // Inside an active merge range
+        if (phase === 'merge' && activeL >= 0 && i >= activeL && i <= activeR) {
+          if (i === comparingA) return C.yellow;
+          if (i === comparingB) return C.purple;
+          if (placedInMerge && placedInMerge.has(i)) return C.green;
+          if (midIdx >= 0) {
+            return i <= midIdx ? C.blue : C.orange;
+          }
+          return C.blue;
+        }
+
+        // Active split range
+        if (phase === 'split' && activeL >= 0 && i >= activeL && i <= activeR) {
+          return C.yellow;
+        }
+
+        // Part of a completed merge (placedSet from inner step)
+        if (step.placedSet && step.placedSet.has(i)) return C.green;
+
+        return C.gray;
+      }
+
+      // Draw background grid lines (subtle)
+      ctx.strokeStyle = 'rgba(28,26,22,0.04)';
+      ctx.lineWidth = 1;
+      for (let y = PAD_TOP; y < H - PAD_BOT; y += 40) {
+        ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+      }
+
+      // Draw bars
+      for (let i = 0; i < N; i++) {
+        const val    = step.arr[i];
+        const barH   = Math.max(4, (val / MAX_VAL) * (barAreaH - 30));
+        const x      = PAD_L + i * barW + slotOff;
+        const y      = PAD_TOP + (barAreaH - barH);
+        const color  = barColor(i);
+
+        // Shadow
+        ctx.fillStyle = 'rgba(28,26,22,0.12)';
+        roundRect(ctx, x + 2, y + 3, slotW, barH, 5);
+        ctx.fill();
+
+        // Bar gradient
+        const grad = ctx.createLinearGradient(x, y, x, y + barH);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, dimColor(color, 0.55));
+        ctx.fillStyle = grad;
+        roundRect(ctx, x, y, slotW, barH, 5);
+        ctx.fill();
+
+        // Highlight shimmer at top of bar
+        ctx.fillStyle = 'rgba(28,26,22,0.2)';
+        roundRect(ctx, x + 3, y + 2, slotW - 6, Math.min(6, barH - 4), 3);
+        ctx.fill();
+
+        // Value label above bar
+        centreText(ctx, String(val),
+          PAD_L + i * barW + barW / 2,
+          y - 12,
+          { font: 'bold 11px "Newsreader", Georgia, serif', color: (color === C.gray ? 'rgba(28,26,22,0.42)' : C.text) });
+
+        // Index label below bar
+        centreText(ctx, String(i),
+          PAD_L + i * barW + barW / 2,
+          H - PAD_BOT + 14,
+          { font: '10px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.42)' });
+      }
+
+      // Draw mid-line divider when splitting
+      if (step.midIdx >= 0 && step.phase === 'split') {
+        const midX = PAD_L + (step.midIdx + 1) * barW - barW / 2;
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(151,113,26,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(midX, PAD_TOP);
+        ctx.lineTo(midX, H - PAD_BOT);
+        ctx.stroke();
+        ctx.restore();
+
+        centreText(ctx, 'mid', midX, PAD_TOP - 10,
+          { font: '10px "Newsreader", Georgia, serif', color: 'rgba(151,113,26,0.7)' });
+      }
+
+      // Range bracket below bars for active range
+      if (step.activeL >= 0 && step.activeR >= 0) {
+        const bx1 = PAD_L + step.activeL * barW + 4;
+        const bx2 = PAD_L + (step.activeR + 1) * barW - 4;
+        const by  = H - PAD_BOT + 28;
+        ctx.strokeStyle = step.phase === 'merge' ? C.blue : C.yellow;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(bx1, by - 4);
+        ctx.lineTo(bx1, by);
+        ctx.lineTo(bx2, by);
+        ctx.lineTo(bx2, by - 4);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        const label = step.phase === 'merge'
+          ? `merge [${step.activeL}..${step.activeR}]`
+          : `split [${step.activeL}..${step.activeR}]`;
+        centreText(ctx, label, (bx1 + bx2) / 2, by + 10,
+          { font: '10px "Newsreader", Georgia, serif',
+            color: step.phase === 'merge' ? 'rgba(84,98,107,0.8)' : 'rgba(151,113,26,0.8)' });
+      }
+
+      // Legend
+      const legendItems = [
+        { color: C.yellow,  label: 'Splitting' },
+        { color: C.blue,    label: 'Left half'  },
+        { color: C.orange,  label: 'Right half' },
+        { color: C.green,   label: 'Sorted'     },
+        { color: C.purple,  label: 'Comparing'  },
+      ];
+      let lx = PAD_L;
+      const ly = 20;
+      legendItems.forEach(({ color, label }) => {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.9;
+        roundRect(ctx, lx, ly - 6, 10, 10, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        centreText(ctx, label, lx + 10 + ctx.measureText(label).width / 2 + 2, ly,
+          { font: '10px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.55)' });
+        lx += ctx.measureText(label).width + 24;
+      });
+    }
+
+    /* Convert a hex or rgba color to rgba(r,g,b,alpha).
+       rgba/rgb strings are passed through unchanged (alpha ignored). */
+    function dimColor(hex, alpha) {
+      if (!hex || hex.startsWith('rgba') || hex.startsWith('rgb')) return hex;
+      const num = parseInt(hex.replace('#', ''), 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8)  & 255;
+      const b =  num        & 255;
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teaching · Kayley Lin · Working Notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=95b6d20b" />
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Kayley Lin <small>Working Notebook</small></div>
+    <nav id="main-nav">
+      <a href="ee.html">Extended Essay</a>
+      <a href="pioneer.html">Pioneer</a>
+      <a href="floorball.html">Floorball</a>
+      <a href="nhl.html">NHL</a>
+      <a href="stepping-stones.html">Stepping-Stones</a>
+      <a href="about.html">About</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <span class="bar-line"></span>
+      <span class="bar-line"></span>
+      <span class="bar-line"></span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ── Back link ──────────────────────────────────── -->
+  <a class="back-link" href="stepping-stones.html">← back to Stepping-Stones</a>
+
+  <!-- ══ HERO ══════════════════════════════════════════ -->
+  <section class="detail-hero">
+    <p class="level">Stepping-Stones <b>/</b> Teaching</p>
+    <p class="eyebrow mono">Algorithm teaching · Shanghai · four years</p>
+    <h1>Where an analogy stops working, and for <em>whom</em></h1>
+    <p class="detail-lead">
+      For four years I taught algorithm concepts (path-planning, sorting, dynamic programming) to
+      migrant-worker kids in Shanghai, ages eleven to thirteen, in small in-person groups.
+      None of them had touched code before. The method was simple and slow:
+      compress each concept into an analogy that an eleven-year-old could hold,
+      then watch exactly where it snapped. Every snap became the next version.
+      The log of those revisions is the actual work.
+    </p>
+  </section>
+
+  <!-- ══ DATA CALLOUTS ══════════════════════════════════ -->
+  <div class="callout-row">
+    <div class="data-callout">
+      <div class="num">4 years</div>
+      <div class="label">On the ground · in-person · Shanghai</div>
+    </div>
+    <div class="data-callout">
+      <div class="num">v1 → v3</div>
+      <div class="label">Analogy revision generations per concept</div>
+    </div>
+  </div>
+
+  <hr class="rule-soft" style="margin:36px 0 0;" />
+
+  <!-- ══ THREE-PART ══════════════════════════════════════ -->
+  <section class="three-part">
+
+    <div class="three-part-section">
+      <p class="three-label">Pressure I applied</p>
+      <h2>Take the abstract. Compress it until a sixth-grader can hold it.</h2>
+      <p>
+        I started with textbook definitions, "a path-finding algorithm computes the minimum-cost
+        route between nodes in a weighted graph." Immediate, uniform confusion. Not because the
+        students were slow. Because the sentence had no foothold in anything they already knew.
+      </p>
+      <p>
+        The constraint I set myself: every concept had to enter through something already
+        in the room, a queue at the cafeteria, a price tag at the market, a door
+        that sticks. <b>Compression under that constraint is the same as any other pressure test.</b>
+        You push the concept into a smaller container until something breaks.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <p class="three-label">Where the system failed</p>
+      <h2>Every analogy fails for some kid, at some point. That point is data.</h2>
+      <p>
+        The delivery-route analogy for path-planning worked until weighted edges appeared.
+        The moment I introduced "some roads take longer than others," students stopped
+        being able to map "cost" onto their mental model of a delivery route, because in
+        their experience, a delivery uncle doesn't think in units of cost, he thinks in
+        landmarks and turns.
+      </p>
+      <p>
+        That failure was not a mistake in the analogy. It was a <b>precise measurement</b>:
+        the analogy held through unweighted graphs and broke at the first edge weight.
+        Which meant the next version had to do one specific thing, give "cost" a concrete
+        form that an eleven-year-old already navigates every day.
+      </p>
+
+      <!-- Media block: classroom photo placeholder -->
+
+    </div>
+
+    <div class="three-part-section">
+      <p class="three-label">What I changed</p>
+      <h2>School-context anchors. Doors that stick.</h2>
+      <p>
+        Version three of the path-planning analogy dropped the delivery uncle entirely.
+        It became: "which classroom doors do you go through to reach the bathroom fastest,
+        when some doors are stuck?" Cost became stuckness, something with a body-level meaning.
+        It held through weighted edges.
+      </p>
+      <p>
+        The principle that emerged: analogies break at the exact point where an abstract
+        property (cost, order, subproblem overlap) has no concrete counterpart in the
+        student's existing world. Finding that point and replacing it with something real
+        is the only revision that works. Patching the surface of the analogy doesn't.
+      </p>
+
+      <!-- Path-planning iteration log -->
+      <div class="iter-log">
+        <div class="iter-row">
+          <div class="iter-v">v1</div>
+          <div class="iter-body">
+            <b>"Path-planning is finding the shortest route between two cities."</b><br>
+            Failed immediately, students had no map, no GPS, no mental model of cities
+            as a graph. The abstraction had nowhere to land.
+          </div>
+        </div>
+        <div class="iter-row">
+          <div class="iter-v">v2</div>
+          <div class="iter-body">
+            <b>"Path-planning is your delivery uncle's daily route."</b><br>
+            Worked better, students could picture the route, the sequence of stops.
+            Broke as soon as weighted edges appeared: students had no model for "cost"
+            on a route their uncle navigated by landmarks; he has never once thought about it in minutes or metres.
+          </div>
+        </div>
+        <div class="iter-row">
+          <div class="iter-v">v3</div>
+          <div class="iter-body">
+            <b>"Path-planning is deciding which classroom doors to go through to reach
+            the bathroom fastest, when some doors are stuck."</b><br>
+            Concrete. School-context. Weighted edges become stuck doors, cost has a
+            physical meaning students navigate daily. Held through the full algorithm.
+          </div>
+        </div>
+      </div>
+
+      <!-- Analogy revision log placeholder -->
+
+    </div>
+
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ══ ANALOGY LIBRARY ════════════════════════════════ -->
+  <section style="padding:52px 0 8px;">
+    <p class="mono eyebrow">The Analogy Library</p>
+    <h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(22px,3vw,30px); line-height:1.15; margin:8px 0 16px;">
+      Each page is one analogy, tested on real students.
+    </h2>
+    <p style="max-width:58ch; color:var(--ink-soft); font-size:18px; line-height:1.65; margin-bottom:28px;">
+      The version number in the revision log corresponds to where each page is today.
+      Start the algorithm, step through it, and watch which part of the analogy
+      the visualizer is actually showing. That's the same question the students asked.
+    </p>
+
+    <div class="artifacts" style="padding:4px 0 30px;">
+      <a class="chip link" href="algorithms/bfs.html">bfs</a>
+      <a class="chip link" href="algorithms/binary-search.html">binary search</a>
+      <a class="chip link" href="algorithms/bst.html">bst</a>
+      <a class="chip link" href="algorithms/bubble-sort.html">bubble sort</a>
+      <a class="chip link" href="algorithms/coin-change.html">coin change</a>
+      <a class="chip link" href="algorithms/dfs.html">dfs</a>
+      <a class="chip link" href="algorithms/dijkstra.html">dijkstra</a>
+      <a class="chip link" href="algorithms/fibonacci.html">fibonacci</a>
+      <a class="chip link" href="algorithms/hanoi.html">hanoi</a>
+      <a class="chip link" href="algorithms/insertion-sort.html">insertion sort</a>
+      <a class="chip link" href="algorithms/knapsack.html">knapsack</a>
+      <a class="chip link" href="algorithms/lcs.html">lcs</a>
+      <a class="chip link" href="algorithms/merge-sort.html">merge sort</a>
+      <a class="chip link" href="algorithms/quick-sort.html">quick sort</a>
+      <a class="chip link" href="algorithms/selection-sort.html">selection sort</a>
+      <a class="chip link" href="algorithms/tree-traversal.html">tree traversal</a>
+    </div>
+
+    <div class="entries" style="padding:0;">
+
+      <article class="entry" style="padding:24px 0;">
+        <div class="idx">·</div>
+        <div>
+          <p class="meta">Graph · Shortest Path · v3 analogy</p>
+          <h3 class="q" style="font-size:clamp(18px,2.5vw,24px);">
+            Path-planning: <span class="qk">doors that stick</span>
+          </h3>
+          <p class="body" style="font-size:17px;">
+            Dijkstra's algorithm, stepped through the classroom-door analogy.
+            Each node is a door; each edge weight is how stuck it is.
+          </p>
+          <a class="link" href="algorithms/dijkstra.html"><span class="arr">→</span> open Dijkstra visualizer</a>
+        </div>
+      </article>
+
+      <article class="entry" style="padding:24px 0;">
+        <div class="idx">·</div>
+        <div>
+          <p class="meta">Graph · Search · rumour analogy</p>
+          <h3 class="q" style="font-size:clamp(18px,2.5vw,24px);">
+            BFS: <span class="qk">a rumour spreading layer by layer</span>
+          </h3>
+          <p class="body" style="font-size:17px;">
+            Breadth-first search as gossip moving through a school.
+            The queue is the thing that makes it spread in rings; take the queue away and it spikes.
+          </p>
+          <a class="link" href="algorithms/bfs.html"><span class="arr">→</span> open BFS visualizer</a>
+        </div>
+      </article>
+
+      <article class="entry" style="padding:24px 0;">
+        <div class="idx">·</div>
+        <div>
+          <p class="meta">Sorting · cafeteria queue analogy</p>
+          <h3 class="q" style="font-size:clamp(18px,2.5vw,24px);">
+            Sorting: <span class="qk">the queue at lunch</span>
+          </h3>
+          <p class="body" style="font-size:17px;">
+            Bubble, selection, insertion, each one is a different way to organize
+            the cafeteria line. Students already had strong intuitions about which was fair.
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <a class="link" href="algorithms/bubble-sort.html"><span class="arr">→</span> bubble sort</a>
+            <a class="link" href="algorithms/insertion-sort.html" style="margin-left:16px;"><span class="arr">→</span> insertion sort</a>
+            <a class="link" href="algorithms/selection-sort.html" style="margin-left:16px;"><span class="arr">→</span> selection sort</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="entry" style="padding:24px 0;">
+        <div class="idx">·</div>
+        <div>
+          <p class="meta">Dynamic Programming · table-building analogy</p>
+          <h3 class="q" style="font-size:clamp(18px,2.5vw,24px);">
+            DP: <span class="qk">remembering what you already counted</span>
+          </h3>
+          <p class="body" style="font-size:17px;">
+            Knapsack and coin-change as packing decisions under a weight limit.
+            The hard part was making "subproblem overlap" feel like something you'd actually
+            want to avoid re-doing, not a formal property.
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <a class="link" href="algorithms/knapsack.html"><span class="arr">→</span> knapsack</a>
+            <a class="link" href="algorithms/coin-change.html" style="margin-left:16px;"><span class="arr">→</span> coin change</a>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <hr class="rule-soft" style="margin:8px 0 0;" />
+
+  <!-- ══ ARTIFACTS ═══════════════════════════════════════ -->
+  <div style="padding:36px 0 40px;">
+    <p class="mono" style="margin-bottom:14px;">Artifacts from this site</p>
+    <p class="facts">
+      4-year teaching log · analogy revision v1 to v3 · 16 algorithm visualisers ·
+      Shanghai volunteer programme ·
+      <a href="https://github.com/kayleyLin/Stepping-Stones">GitHub ↗</a>
+    </p>
+  </div>
+
+  <!-- ══ LOOP CLOSE ══════════════════════════════════════ -->
+  <section class="loop">
+    <p>
+      ↳ and reading a struggling student is, again, a 0.3-second read,       <a class="rust" href="floorball.html" style="font-style:inherit; border-bottom:1px solid var(--rust);">back to the ice</a>.
+    </p>
+  </section>
+
+  <nav class="pager">
+    <a href="stepping-stones.html"><span class="pg-label">← Up one level</span>Stepping-Stones</a>
+    <a class="pg-next" href="about.html"><span class="pg-label">Next →</span>About</a>
+  </nav>
+
+  <footer>
+    <span>Kayley Lin · working notebook</span>
+    <span>Fraunces &amp; JetBrains Mono</span>
+  </footer>
+
+</main>
+
+<script src="../scripts/main.js?v=32519cdf"></script>
+<script>
+  // Mobile nav toggle
+  const toggle = document.getElementById('nav-toggle');
+  const nav    = document.getElementById('main-nav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      nav.classList.toggle('open');
+    });
+  }
+</script>
+</body>
+</html>

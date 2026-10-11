@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Quick Sort · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Quick Sort</span>
+    <span class="algo-category">Recursion &amp; D&amp;C</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Pick a dividing line, put everyone shorter on the left and taller on the right, then repeat.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function quickSort(arr, low, high):</span>
+          <span class="code-line">  if low &lt; high:</span>
+          <span class="code-line">    pivot_idx = partition(arr, low, high)</span>
+          <span class="code-line">    quickSort(arr, low, pivot_idx - 1)</span>
+          <span class="code-line">    quickSort(arr, pivot_idx + 1, high)</span>
+          <span class="code-line">function partition(arr, low, high):</span>
+          <span class="code-line">  pivot = arr[high]; i = low - 1</span>
+          <span class="code-line">  for j in [low..high-1]:</span>
+          <span class="code-line">    if arr[j] &lt;= pivot: i++; swap(arr[i], arr[j])</span>
+          <span class="code-line">  swap(arr[i+1], arr[high]); return i+1</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(n log n)</strong> average, <strong>O(n²)</strong> worst case when pivot is always the min or max</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(log n)</strong> average stack depth, <strong>O(n)</strong> worst case (skewed recursion)</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Pivot selection determines everything. A good pivot splits the array roughly in half each time, giving O(log n) levels. A bad pivot (always min/max) gives O(n) levels.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Default choice for in-memory sorting. In practice faster than merge sort due to better cache performance and no extra memory allocation.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Sorted input + first-element pivot = O(n²) every time. Production implementations always use randomised pivot or median-of-three to avoid this.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    const INIT = [10, 7, 8, 9, 1, 5, 12, 3, 14, 6];
+    const N = INIT.length;
+    const MAX_VAL = Math.max(...INIT);
+
+    /* ── Step builder ──────────────────────────────────────────
+       Each step carries:
+         arr        : current snapshot of the working array
+         low, high  : active partition range
+         pivotIdx   : current pivot index (rightmost of range)
+         i          : write pointer (elements <= pivot land here)
+         j          : scan pointer
+         swapA/B    : indices being swapped this step (or -1)
+         finalPivots: Set of indices that are in final position
+         phase      : 'choose' | 'compare' | 'swap' | 'place' | 'recurse' | 'done'
+         lines      : pseudocode line indices
+         desc       : human-readable description
+    ──────────────────────────────────────────────────────────── */
+    function buildSteps() {
+      const steps = [];
+      const arr = INIT.slice();
+      const finalPivots = new Set();  // globally sorted positions
+
+      function snap(overrides) {
+        steps.push(Object.assign({
+          arr: arr.slice(),
+          low: -1,
+          high: -1,
+          pivotIdx: -1,
+          iPtr: -1,
+          jPtr: -1,
+          swapA: -1,
+          swapB: -1,
+          finalPivots: new Set(finalPivots),
+          phase: 'compare',
+          lines: [],
+          desc: ''
+        }, overrides));
+      }
+
+      function quickSort(low, high) {
+        if (low >= high) {
+          if (low === high) {
+            finalPivots.add(low);
+            snap({ low, high, phase: 'done', lines: [1],
+                   finalPivots: new Set(finalPivots),
+                   desc: `Single element at index ${low} (value ${arr[low]}), already in place.` });
+          }
+          return;
+        }
+
+        snap({ low, high, phase: 'choose', pivotIdx: high, lines: [1, 2, 5, 6],
+               desc: `quickSort(${low}, ${high}): choosing pivot = ${arr[high]} (rightmost element at index ${high}).` });
+
+        const pi = partition(low, high);
+
+        // pivot is now in its final place
+        finalPivots.add(pi);
+        snap({ low, high, pivotIdx: pi, phase: 'place', lines: [2, 9],
+               finalPivots: new Set(finalPivots),
+               desc: `Pivot ${arr[pi]} placed at final position ${pi}. Now recurse on left [${low}..${pi-1}] and right [${pi+1}..${high}].` });
+
+        snap({ low, high, pivotIdx: pi, phase: 'recurse', lines: [3],
+               finalPivots: new Set(finalPivots),
+               desc: `Recurse LEFT: quickSort(${low}, ${pi - 1}).` });
+        quickSort(low, pi - 1);
+
+        snap({ low, high, pivotIdx: pi, phase: 'recurse', lines: [4],
+               finalPivots: new Set(finalPivots),
+               desc: `Recurse RIGHT: quickSort(${pi + 1}, ${high}).` });
+        quickSort(pi + 1, high);
+      }
+
+      function partition(low, high) {
+        const pivotVal = arr[high];
+        let i = low - 1;
+
+        for (let j = low; j < high; j++) {
+          snap({ low, high, pivotIdx: high, iPtr: i, jPtr: j,
+                 phase: 'compare', lines: [7, 8],
+                 desc: `Scan j=${j}: arr[j]=${arr[j]} vs pivot=${pivotVal}. ${arr[j] <= pivotVal ? arr[j] + ' ≤ pivot → will swap.' : arr[j] + ' > pivot → skip.'}` });
+
+          if (arr[j] <= pivotVal) {
+            i++;
+            if (i !== j) {
+              snap({ low, high, pivotIdx: high, iPtr: i, jPtr: j,
+                     swapA: i, swapB: j, phase: 'swap', lines: [8],
+                     desc: `arr[${arr[j]}] ≤ pivot. Swap arr[${i}]=${arr[i]} ↔ arr[${j}]=${arr[j]}.` });
+              const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+            } else {
+              snap({ low, high, pivotIdx: high, iPtr: i, jPtr: j,
+                     phase: 'compare', lines: [8],
+                     desc: `arr[${arr[j]}] ≤ pivot. i advances to ${i} (no swap needed, i==j).` });
+            }
+          }
+        }
+
+        // Place pivot
+        const finalPos = i + 1;
+        if (finalPos !== high) {
+          snap({ low, high, pivotIdx: high, iPtr: i, jPtr: high,
+                 swapA: finalPos, swapB: high, phase: 'place', lines: [9],
+                 desc: `Place pivot ${pivotVal}: swap arr[${finalPos}]=${arr[finalPos]} ↔ arr[${high}]=${arr[high]}.` });
+          const tmp = arr[finalPos]; arr[finalPos] = arr[high]; arr[high] = tmp;
+        } else {
+          snap({ low, high, pivotIdx: high, iPtr: i, jPtr: high,
+                 phase: 'place', lines: [9],
+                 desc: `Pivot ${pivotVal} already at correct position ${finalPos}.` });
+        }
+
+        return finalPos;
+      }
+
+      // Initial snapshot
+      snap({ lines: [0], phase: 'choose',
+             desc: `Starting Quick Sort on [${INIT.join(', ')}]. Lomuto partition scheme.` });
+
+      quickSort(0, N - 1);
+
+      // Mark all remaining as final
+      for (let k = 0; k < N; k++) finalPivots.add(k);
+      snap({ phase: 'done', lines: [], finalPivots: new Set(finalPivots),
+             desc: `Array fully sorted! Quick Sort complete, average O(n log n).` });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw function ─────────────────────────────────────────── */
+    function draw(ctx, step, W, H) {
+      const PAD_L = 36, PAD_R = 24, PAD_TOP = 56, PAD_BOT = 68;
+      const barAreaW = W - PAD_L - PAD_R;
+      const barAreaH = H - PAD_TOP - PAD_BOT;
+      const barW     = barAreaW / N;
+      const slotW    = barW * 0.72;
+      const slotOff  = (barW - slotW) / 2;
+
+      // Color logic per index
+      function barColor(i) {
+        const { phase, low, high, pivotIdx, iPtr, jPtr, swapA, swapB, finalPivots } = step;
+
+        // Always show final pivots as solid green
+        if (finalPivots.has(i)) return C.green;
+
+        // Outside active range → dimmed
+        if (low < 0 || i < low || i > high) return C.gray;
+
+        // Pivot bar
+        if (i === pivotIdx) return C.orange;
+
+        // Being compared/swapped
+        if (i === swapA || i === swapB) return C.yellow;
+
+        // j pointer (current scan)
+        if (i === jPtr) return C.purple;
+
+        // i pointer (boundary)
+        if (i === iPtr) return C.blue;
+
+        // Inside range: tint by relative position to i pointer
+        if (iPtr >= low && i <= iPtr) {
+          // left of i+1 → these are <= pivot
+          return dimColor(C.green, 0.45);
+        }
+
+        return dimColor(C.red, 0.35);
+      }
+
+      // Subtle grid
+      ctx.strokeStyle = 'rgba(28,26,22,0.04)';
+      ctx.lineWidth = 1;
+      for (let y = PAD_TOP; y < H - PAD_BOT; y += 40) {
+        ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+      }
+
+      // Highlight active range background
+      if (step.low >= 0 && step.high >= 0) {
+        const rx = PAD_L + step.low * barW;
+        const rw = (step.high - step.low + 1) * barW;
+        ctx.fillStyle = 'rgba(84,98,107,0.04)';
+        roundRect(ctx, rx, PAD_TOP, rw, barAreaH, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(84,98,107,0.12)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Draw bars
+      for (let i = 0; i < N; i++) {
+        const val   = step.arr[i];
+        const barH  = Math.max(4, (val / MAX_VAL) * (barAreaH - 30));
+        const x     = PAD_L + i * barW + slotOff;
+        const y     = PAD_TOP + (barAreaH - barH);
+        const color = barColor(i);
+
+        // Shadow
+        ctx.fillStyle = 'rgba(28,26,22,0.12)';
+        roundRect(ctx, x + 2, y + 3, slotW, barH, 5);
+        ctx.fill();
+
+        // Bar gradient
+        const grad = ctx.createLinearGradient(x, y, x, y + barH);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, dimColor(color.startsWith('rgba') ? '#8A8073' : color, 0.5));
+        ctx.fillStyle = grad;
+        roundRect(ctx, x, y, slotW, barH, 5);
+        ctx.fill();
+
+        // Shimmer
+        ctx.fillStyle = 'rgba(28,26,22,0.16)';
+        roundRect(ctx, x + 3, y + 2, slotW - 6, Math.min(6, barH - 4), 3);
+        ctx.fill();
+
+        // Swap animation glow
+        if (i === step.swapA || i === step.swapB) {
+          ctx.strokeStyle = C.yellow;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.8;
+          roundRect(ctx, x - 1, y - 1, slotW + 2, barH + 2, 6);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        // Value label above bar
+        const isFinal = step.finalPivots.has(i);
+        centreText(ctx, String(val),
+          PAD_L + i * barW + barW / 2,
+          y - 13,
+          { font: 'bold 11px "Newsreader", Georgia, serif',
+            color: (color === C.gray || color.startsWith('rgba')) ? 'rgba(28,26,22,0.42)' : C.text });
+
+        // Index label below bar
+        centreText(ctx, String(i),
+          PAD_L + i * barW + barW / 2,
+          H - PAD_BOT + 14,
+          { font: '10px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.42)' });
+      }
+
+      // Pointer labels below bars (i and j)
+      const ptrY = H - PAD_BOT + 30;
+      if (step.iPtr >= step.low && step.iPtr <= step.high) {
+        const px = PAD_L + step.iPtr * barW + barW / 2;
+        centreText(ctx, 'i', px, ptrY,
+          { font: 'bold 11px SF Mono, monospace', color: C.blue });
+      }
+      if (step.jPtr >= 0 && step.jPtr >= step.low && step.jPtr <= step.high && step.jPtr !== step.pivotIdx) {
+        const px = PAD_L + step.jPtr * barW + barW / 2;
+        centreText(ctx, 'j', px, ptrY + (step.jPtr === step.iPtr ? 14 : 0),
+          { font: 'bold 11px SF Mono, monospace', color: C.purple });
+      }
+      if (step.pivotIdx >= 0) {
+        const px = PAD_L + step.pivotIdx * barW + barW / 2;
+        centreText(ctx, 'pivot', px, ptrY,
+          { font: 'bold 10px "Newsreader", Georgia, serif', color: C.orange });
+      }
+
+      // Range bracket
+      if (step.low >= 0 && step.high >= 0 && step.low !== step.high) {
+        const bx1 = PAD_L + step.low  * barW + 4;
+        const bx2 = PAD_L + (step.high + 1) * barW - 4;
+        const by  = H - PAD_BOT + 46;
+        ctx.strokeStyle = 'rgba(84,98,107,0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx1, by - 4); ctx.lineTo(bx1, by);
+        ctx.lineTo(bx2, by);     ctx.lineTo(bx2, by - 4);
+        ctx.stroke();
+        centreText(ctx, `active [${step.low}..${step.high}]`, (bx1 + bx2) / 2, by + 10,
+          { font: '9px "Newsreader", Georgia, serif', color: 'rgba(84,98,107,0.7)' });
+      }
+
+      // Legend
+      const legendItems = [
+        { color: C.orange, label: 'Pivot'      },
+        { color: C.blue,   label: 'i (write)'  },
+        { color: C.purple, label: 'j (scan)'   },
+        { color: C.yellow, label: 'Swapping'   },
+        { color: C.green,  label: 'Sorted'     },
+      ];
+      let lx = PAD_L;
+      const ly = 20;
+      legendItems.forEach(({ color, label }) => {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.9;
+        roundRect(ctx, lx, ly - 6, 10, 10, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        const tw = ctx.measureText(label).width;
+        centreText(ctx, label, lx + 10 + tw / 2 + 2, ly,
+          { font: '10px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.55)' });
+        lx += tw + 24;
+      });
+    }
+
+    /* Convert hex color to rgba with given alpha */
+    function dimColor(hex, alpha) {
+      if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+        // Already rgba, just return as-is (used for tint colors)
+        return hex;
+      }
+      const num = parseInt(hex.replace('#', ''), 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8)  & 255;
+      const b =  num        & 255;
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

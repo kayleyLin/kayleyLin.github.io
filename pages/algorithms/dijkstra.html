@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dijkstra · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    .pq-block { margin-top: 0.75rem; }
+    .pq-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(28,26,22,0.42);
+      margin-bottom: 0.45rem;
+    }
+    .pq-cells {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .pq-cell {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.68rem;
+      background: rgba(84,98,107,0.18);
+      color: #5F7F8C;
+      border: 1px solid rgba(84,98,107,0.35);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .pq-cell.min {
+      background: rgba(151,113,26,0.18);
+      color: #97711A;
+      border-color: rgba(255,212,10,0.5);
+    }
+    .pq-empty {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      color: rgba(28,26,22,0.38);
+    }
+    .dist-block { margin-top: 0.75rem; }
+    .dist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+    }
+    .dist-table th {
+      color: rgba(28,26,22,0.42);
+      font-weight: 600;
+      text-align: left;
+      padding: 2px 6px;
+      border-bottom: 1px solid rgba(28,26,22,0.11);
+    }
+    .dist-table td {
+      padding: 3px 6px;
+      color: rgba(28,26,22,0.55);
+    }
+    .dist-table tr.finalized td { color: #4B6B4E; }
+    .dist-table tr.current-node td { color: #97711A; }
+    .dist-table tr.in-pq td { color: #5F7F8C; }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Dijkstra's Algorithm</span>
+    <span class="algo-category">Graph &amp; Search</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Always take the cheapest available flight, GPS does this millions of times per second.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">dist = {all: ∞, start: 0}; pq = [start]</span>
+          <span class="code-line">while pq not empty:</span>
+          <span class="code-line">  u = extract_min(pq)            // node with smallest dist</span>
+          <span class="code-line">  mark u as processed</span>
+          <span class="code-line">  for v in neighbors(u):</span>
+          <span class="code-line">    if dist[u] + w(u,v) &lt; dist[v]:</span>
+          <span class="code-line">      dist[v] = dist[u] + w(u,v)  // relax edge</span>
+          <span class="code-line">      pq.add(v)</span>
+        </div>
+        <div class="pq-block">
+          <div class="pq-label">Priority Queue (node:dist)</div>
+          <div class="pq-cells" id="pq-display">
+            <span class="pq-empty">empty</span>
+          </div>
+        </div>
+        <div class="dist-block">
+          <div class="pq-label">Distance Table</div>
+          <table class="dist-table" id="dist-table">
+            <tr><th>Node</th><th>dist</th><th>via</th></tr>
+          </table>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O((V + E) log V)</strong> with min-heap, each node extracted once, each edge relaxed once</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(V)</strong> for distance table and priority queue</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>A greedy algorithm that works because edge weights are non-negative: once a node is extracted from the priority queue with distance d, d is provably optimal. No future path can be shorter.</li>
+          <li class="insight insight-when"><strong>When to use</strong>GPS routing, network packet routing, flight path optimisation, any single-source shortest path problem with non-negative edge weights.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Fails with negative edges, a cheaper path could be discovered after extraction. Use Bellman-Ford for negative weights (O(VE), slower but correct).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1/1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Graph definition ──────────────────────────────────────── */
+  const NODES = ['A','B','C','D','E','F','G'];
+  const START = 'A', GOAL = 'G';
+
+  // Undirected weighted edges
+  const EDGES = [
+    ['A','B',4], ['A','C',2],
+    ['B','C',1], ['B','D',5],
+    ['C','E',10],
+    ['D','F',2], ['D','G',6],
+    ['E','D',3], ['E','G',7],
+    ['F','G',1],
+  ];
+
+  // Build adjacency list
+  const ADJ = {};
+  NODES.forEach(n => { ADJ[n] = []; });
+  for (const [u, v, w] of EDGES) {
+    ADJ[u].push([v, w]);
+    ADJ[v].push([u, w]);
+  }
+
+  const INF = Infinity;
+
+  /* ── Pre-compute Dijkstra ──────────────────────────────────── */
+  function buildSteps() {
+    const steps = [];
+
+    // State
+    const dist = {};
+    const prev = {};
+    const processed = new Set();
+    NODES.forEach(n => { dist[n] = INF; prev[n] = null; });
+    dist[START] = 0;
+
+    // PQ: array of [node, dist], min-heap simulated with sort
+    const pq = [[START, 0]];
+    // activeEdge: [u,v] being relaxed; relaxedEdges: set of 'u-v' that improved
+    let activeEdge = null;
+    const relaxedEdges = new Set();  // edges part of current shortest tree
+    let shortestPath = [];           // nodes on final path when goal reached
+
+    function snapshot(current, desc, lines) {
+      steps.push({
+        dist: { ...dist },
+        prev: { ...prev },
+        processed: new Set(processed),
+        current,
+        pq: pq.map(([n, d]) => [n, d]),
+        activeEdge,
+        relaxedEdges: new Set(relaxedEdges),
+        shortestPath: [...shortestPath],
+        desc,
+        lines,
+      });
+    }
+
+    snapshot(null, `Initialize: dist[A]=0, all others ∞. Enqueue A.`, [0]);
+
+    while (pq.length > 0) {
+      // Extract min
+      pq.sort((a, b) => a[1] - b[1]);
+      const [u, du] = pq.shift();
+
+      // Skip stale entries
+      if (processed.has(u)) continue;
+      if (du > dist[u]) continue;
+
+      processed.add(u);
+      activeEdge = null;
+      snapshot(u, `Extract min: node ${u} with dist=${dist[u]}. Mark as processed.`, [2, 3]);
+
+      if (u === GOAL) {
+        // Reconstruct path
+        let cur = GOAL;
+        while (cur) {
+          shortestPath.unshift(cur);
+          cur = prev[cur];
+        }
+        snapshot(u, `Goal ${GOAL} reached! Shortest path: ${shortestPath.join(' → ')} (cost=${dist[GOAL]}).`, [3]);
+        break;
+      }
+
+      for (const [v, w] of ADJ[u]) {
+        if (processed.has(v)) continue;
+        activeEdge = [u, v];
+        const newDist = dist[u] + w;
+
+        if (newDist < dist[v]) {
+          dist[v] = newDist;
+          prev[v] = u;
+          // Update or add to PQ
+          const existing = pq.findIndex(([n]) => n === v);
+          if (existing >= 0) pq.splice(existing, 1);
+          pq.push([v, newDist]);
+          // Mark this as a relaxed tree edge
+          relaxedEdges.add(`${u}-${v}`);
+          relaxedEdges.add(`${v}-${u}`);
+          snapshot(u, `Relax edge ${u}→${v}: dist[${v}] updated to ${newDist} (via ${u}).`, [4, 5, 6, 7]);
+        } else {
+          snapshot(u, `Edge ${u}→${v}: dist[${v}]=${dist[v]} already ≤ ${newDist}. No update.`, [4, 5]);
+        }
+      }
+    }
+
+    if (shortestPath.length === 0) {
+      snapshot(null, 'PQ empty, goal not reachable.', [1]);
+    }
+
+    return steps;
+  }
+
+  /* ── Canvas node positions ─────────────────────────────────── */
+  function nodePos(W, H) {
+    // A=left, B=upper-mid-left, C=lower-mid-left,
+    // D=center, E=upper-mid-right, F=lower-mid-right, G=right
+    const mx = W / 2;
+    const my = H / 2;
+    return {
+      A: [mx * 0.18,  my],
+      B: [mx * 0.68,  my * 0.38],
+      C: [mx * 0.68,  my * 1.62],
+      D: [mx,         my],
+      E: [mx * 1.32,  my * 0.38],
+      F: [mx * 1.32,  my * 1.62],
+      G: [mx * 1.82,  my],
+    };
+  }
+
+  const NODE_R = 22;
+
+  /* ── Draw ──────────────────────────────────────────────────── */
+  function draw(ctx, step, W, H) {
+    ctx.clearRect(0, 0, W, H);
+    if (!step) return;
+
+    const pos = nodePos(W, H);
+
+    // Helper: edge key canonical
+    function edgeKey(u, v) {
+      return [u, v].sort().join('-');
+    }
+
+    // ── Draw edges
+    for (const [u, v, w] of EDGES) {
+      const [x1, y1] = pos[u];
+      const [x2, y2] = pos[v];
+
+      const isRelaxed = step.relaxedEdges.has(`${u}-${v}`) || step.relaxedEdges.has(`${v}-${u}`);
+      const isOnPath  = step.shortestPath.length > 1 &&
+        step.shortestPath.some((n, i) => {
+          if (i === 0) return false;
+          const a = step.shortestPath[i-1], b = step.shortestPath[i];
+          return (a===u&&b===v)||(a===v&&b===u);
+        });
+      const isActive  = step.activeEdge &&
+        ((step.activeEdge[0]===u&&step.activeEdge[1]===v)||
+         (step.activeEdge[0]===v&&step.activeEdge[1]===u));
+
+      ctx.save();
+      let lineColor, lw;
+      if (isOnPath) {
+        lineColor = C.green;
+        lw = 3;
+        ctx.shadowColor = C.green;
+        ctx.shadowBlur = 10;
+      } else if (isActive) {
+        lineColor = C.yellow;
+        lw = 2.5;
+        ctx.shadowColor = C.yellow;
+        ctx.shadowBlur = 10;
+      } else if (isRelaxed) {
+        lineColor = 'rgba(84,98,107,0.55)';
+        lw = 2;
+      } else {
+        lineColor = 'rgba(28,26,22,0.16)';
+        lw = 1.5;
+      }
+
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+
+      // Weight label, positioned at midpoint, slightly offset
+      const mx = (x1+x2)/2, my = (y1+y2)/2;
+      const angle = Math.atan2(y2-y1, x2-x1);
+      const perp = angle + Math.PI/2;
+      const labelOffset = 14;
+      const lbx = mx + Math.cos(perp) * labelOffset;
+      const lby = my + Math.sin(perp) * labelOffset;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(243,239,230,0.9)';
+      ctx.beginPath();
+      ctx.arc(lbx, lby, 9, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+      centreText(ctx, String(w), lbx, lby, {
+        font: 'bold 11px SF Mono, Menlo, monospace',
+        color: isOnPath ? C.green : isActive ? C.yellow : 'rgba(28,26,22,0.5)',
+      });
+    }
+
+    // ── Draw nodes
+    for (const n of NODES) {
+      const [x, y] = pos[n];
+      const isStart = n === START;
+      const isGoal  = n === GOAL;
+      const isProc  = step.processed.has(n);
+      const isCurr  = step.current === n;
+      const inPQ    = step.pq.some(([nd]) => nd === n);
+      const onPath  = step.shortestPath.includes(n);
+
+      let fillColor, strokeColor, glowColor;
+      if (onPath && step.shortestPath.length > 1) {
+        fillColor   = isStart ? C.teal : isGoal ? C.orange : C.green;
+        strokeColor = fillColor;
+        glowColor   = fillColor;
+      } else if (isCurr) {
+        fillColor   = C.yellow;
+        strokeColor = C.yellow;
+        glowColor   = C.yellow;
+      } else if (isStart) {
+        fillColor   = C.teal;
+        strokeColor = C.teal;
+        glowColor   = C.teal;
+      } else if (isGoal) {
+        fillColor   = C.orange;
+        strokeColor = C.orange;
+        glowColor   = C.orange;
+      } else if (isProc) {
+        fillColor   = C.green;
+        strokeColor = C.green;
+        glowColor   = C.green;
+      } else if (inPQ) {
+        fillColor   = 'rgba(84,98,107,0.28)';
+        strokeColor = C.blue;
+        glowColor   = C.blue;
+      } else {
+        fillColor   = 'rgba(28,26,22,0.09)';
+        strokeColor = 'rgba(28,26,22,0.3)';
+        glowColor   = null;
+      }
+
+      ctx.save();
+      if (glowColor && (isCurr || isStart || isGoal || isProc)) {
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = isCurr ? 20 : 10;
+      }
+      ctx.fillStyle = fillColor;
+      ctx.beginPath();
+      ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = isCurr ? 2.5 : 1.8;
+      ctx.beginPath();
+      ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // Node label
+      const darkLabel = isCurr || isStart || isGoal || isProc || (onPath && step.shortestPath.length > 1);
+      centreText(ctx, n, x, y, {
+        font: 'bold 15px -apple-system, "Newsreader", Georgia, serif',
+        color: darkLabel ? '#1C1A16' : C.dim,
+      });
+
+      // Distance label below node
+      const d = step.dist[n];
+      const dStr = d === Infinity ? '∞' : String(d);
+      const distColor = isCurr ? C.yellow
+        : isProc || (onPath && step.shortestPath.length > 1) ? C.green
+        : inPQ   ? C.blue
+        : 'rgba(28,26,22,0.42)';
+
+      ctx.save();
+      if (onPath && step.shortestPath.length > 1 && !isStart && !isGoal) {
+        ctx.shadowColor = C.green;
+        ctx.shadowBlur = 6;
+      }
+      centreText(ctx, dStr, x, y + NODE_R + 13, {
+        font: `bold 12px SF Mono, Menlo, monospace`,
+        color: distColor,
+      });
+      ctx.restore();
+    }
+
+    // ── Update right panel: PQ display
+    const pqEl = document.getElementById('pq-display');
+    if (pqEl) {
+      const sorted = [...step.pq].sort((a,b) => a[1]-b[1]);
+      if (sorted.length === 0) {
+        pqEl.innerHTML = '<span class="pq-empty">empty</span>';
+      } else {
+        pqEl.innerHTML = sorted
+          .map(([n, d], i) => `<span class="pq-cell${i===0?' min':''}">${n}:${d===Infinity?'∞':d}</span>`)
+          .join('');
+      }
+    }
+
+    // ── Update right panel: distance table
+    const tbl = document.getElementById('dist-table');
+    if (tbl) {
+      const rows = NODES.map(n => {
+        const d = step.dist[n];
+        const p = step.prev[n];
+        const isProc = step.processed.has(n);
+        const isCurr = step.current === n;
+        const inPQ   = step.pq.some(([nd]) => nd === n);
+        let cls = '';
+        if (isCurr) cls = 'current-node';
+        else if (isProc) cls = 'finalized';
+        else if (inPQ) cls = 'in-pq';
+        return `<tr class="${cls}"><td>${n}</td><td>${d===Infinity?'∞':d}</td><td>${p||'—'}</td></tr>`;
+      }).join('');
+      tbl.innerHTML = `<tr><th>Node</th><th>dist</th><th>via</th></tr>${rows}`;
+    }
+  }
+
+  /* ── Bootstrap ─────────────────────────────────────────────── */
+  const { ctx, W, H } = setupCanvas('canvas');
+  const steps = buildSteps();
+  const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

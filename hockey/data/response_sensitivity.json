@@ -1,0 +1,66 @@
+{
+  "description": "xG reframed as a response function R(theta). Local derivatives are finite-difference partials on the two continuous geometric parameters; the one-dose ranking measures |delta R| under one realistic perturbation unit (+-1 empirical std for continuous parameters, one resample from the empirical distribution for categorical parameters), evaluated over the same 5,000-shot sample.",
+  "sample_size": 5000,
+  "baseline_mean_R": 0.06201,
+  "definition": {
+    "continuous": "0.5 * (abs(R_plus - R_0) + abs(R_minus - R_0))",
+    "binary": "abs(R_flip - R_0)",
+    "categorical": "abs(R_seeded_different_category - R_0)",
+    "interpretation": "model perturbation sensitivity; not a causal physical effect",
+    "random_seed": 42
+  },
+  "derivatives": {
+    "dist_to_goal": {
+      "mean_dR_dx": -0.005024,
+      "mean_abs_dR_dx": 0.006136,
+      "units": "probability per foot"
+    },
+    "angle_to_goal": {
+      "mean_dR_dx": -0.001164,
+      "mean_abs_dR_dx": 0.002084,
+      "units": "probability per degree"
+    }
+  },
+  "one_dose_ranking": [
+    {
+      "feature": "dist_to_goal",
+      "label": "Shot distance",
+      "mean_abs_delta_R": 0.11155,
+      "std_abs_delta_R": 0.11216
+    },
+    {
+      "feature": "is_rebound",
+      "label": "Rebound state",
+      "mean_abs_delta_R": 0.07476,
+      "std_abs_delta_R": 0.05583
+    },
+    {
+      "feature": "shot_type_code",
+      "label": "Shot type",
+      "mean_abs_delta_R": 0.05777,
+      "std_abs_delta_R": 0.06233
+    },
+    {
+      "feature": "angle_to_goal",
+      "label": "Shot angle",
+      "mean_abs_delta_R": 0.01381,
+      "std_abs_delta_R": 0.01359
+    },
+    {
+      "feature": "period",
+      "label": "Period",
+      "mean_abs_delta_R": 0.004,
+      "std_abs_delta_R": 0.00549
+    },
+    {
+      "feature": "is_home_team",
+      "label": "Home/away",
+      "mean_abs_delta_R": 0.00214,
+      "std_abs_delta_R": 0.00379
+    }
+  ],
+  "sigma": {
+    "dist_to_goal_ft": 18.84,
+    "angle_to_goal_deg": 19.89
+  }
+}

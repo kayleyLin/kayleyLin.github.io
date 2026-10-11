@@ -1,0 +1,335 @@
+/* ─────────────────────────────────────────────────────────────
+   algo.css  —  Shared styles for all algorithm animation pages
+
+   Same design system as main.css: paper/ink/rust, Fraunces ·
+   Newsreader · JetBrains Mono. The layout stays an app shell —
+   full-height, canvas left, notes right, transport along the
+   bottom — because that is what the visualisers need; only the
+   surface changed. Class names are unchanged, so the 16 pages
+   did not have to be touched for the restyle.
+───────────────────────────────────────────────────────────── */
+
+:root {
+  --paper:    #F3EFE6;
+  --paper-2:  #EAE4D6;
+  --ink:      #1C1A16;
+  --ink-soft: #4B463C;
+  --faint:    #B9B1A0;
+  --rust:     #BB4A2C;
+  --steel:    #54626B;
+  --rule:     #D8D1C0;
+
+  --serif: 'Fraunces', Georgia, 'Songti SC', serif;
+  --text:  'Newsreader', Georgia, 'Songti SC', serif;
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--text);
+  -webkit-font-smoothing: antialiased;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.algo-nav {
+  flex-shrink: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  border-bottom: 1.5px solid var(--ink);
+  background: var(--paper);
+  z-index: 10;
+}
+.algo-nav a {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.18s;
+}
+.algo-nav a:hover { color: var(--rust); }
+.algo-title {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.algo-category {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--faint);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Main layout ─────────────────────────────────────────── */
+.algo-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 372px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Canvas area ─────────────────────────────────────────── */
+.algo-canvas-wrap {
+  position: relative;
+  border-right: 1px solid var(--rule);
+  background: var(--paper);
+  overflow: hidden;
+}
+.algo-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Info panel ──────────────────────────────────────────── */
+.algo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  background: #EFE9DD;
+}
+.info-block {
+  padding: 1.25rem 1.35rem 1.1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.info-block:last-child { border-bottom: none; flex: 1; }
+
+.info-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin-bottom: 0.7rem;
+}
+
+.analogy-text {
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+#step-desc {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  min-height: 2.5em;
+  transition: color 0.2s;
+}
+
+/* ── Pseudocode ──────────────────────────────────────────── */
+.pseudo-wrap {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0.75rem 0.5rem;
+}
+.code-line {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.9;
+  /* Several pseudocode lines carry a trailing comment that ran off the panel
+     and was cut mid-word. They wrap now, with the continuation hanging under
+     the line it belongs to, so nothing needs a horizontal scroll to read. */
+  padding: 0.05rem 0.45rem 0.05rem 1.6rem;
+  text-indent: -1.15rem;
+  color: var(--faint);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  transition: background 0.12s, color 0.12s;
+}
+.code-line.hl {
+  background: rgba(187, 74, 44, 0.12);
+  color: var(--ink);
+  box-shadow: inset 2px 0 0 var(--rust);
+}
+
+/* ── Controls bar ────────────────────────────────────────── */
+.algo-controls {
+  flex-shrink: 0;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1.35rem;
+  border-top: 1.5px solid var(--ink);
+  background: var(--paper);
+}
+
+.ctrl-btn {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.18s, color 0.18s;
+  flex-shrink: 0;
+}
+.ctrl-btn:hover { border-color: var(--rust); color: var(--rust); }
+.ctrl-btn svg { pointer-events: none; }
+
+#btn-play {
+  width: auto;
+  padding: 0 1rem;
+  gap: 0.45rem;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#btn-play:hover { background: var(--rust); border-color: var(--rust); color: var(--paper); }
+
+.ctrl-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--rule);
+  flex-shrink: 0;
+}
+
+.progress-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.progress-track {
+  flex: 1;
+  height: 2px;
+  background: var(--rule);
+  border-radius: 0;
+  overflow: hidden;
+}
+#progress-fill {
+  height: 100%;
+  background: var(--rust);
+  width: 0%;
+  transition: width 0.12s linear;
+}
+
+#step-counter {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--steel);
+  min-width: 3.5rem;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.speed-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+#speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 76px;
+  height: 2px;
+  background: var(--ink);
+  cursor: pointer;
+}
+#speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--rust); border: 2px solid var(--paper); cursor: pointer;
+}
+#speed-slider::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--rust); border: 2px solid var(--paper); cursor: pointer;
+}
+
+/* ── Complexity badges ───────────────────────────────────── */
+.kp-list { display: flex; flex-direction: column; gap: .6rem; }
+.kp { display: flex; align-items: baseline; gap: .6rem; }
+.kp-badge {
+  font-family: var(--mono);
+  font-size: .6rem; font-weight: 400;
+  letter-spacing: .08em; padding: .2rem .5rem;
+  border-radius: 0; white-space: nowrap; flex-shrink: 0; text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+.kp-time  { color: #97711A; }
+.kp-space { color: var(--steel); }
+.kp-text { font-size: .875rem; color: var(--ink-soft); line-height: 1.55; }
+.kp-text strong { color: var(--ink); font-weight: 500; font-family: var(--mono); font-size: .85em; }
+
+/* ── Key insight list ────────────────────────────────────── */
+.insight-list { list-style: none; display: flex; flex-direction: column; gap: .7rem; }
+.insight {
+  font-size: .875rem; color: var(--ink-soft);
+  line-height: 1.6; padding-left: .85rem;
+  border-left: 2px solid var(--rule);
+}
+.insight strong {
+  display: block; font-family: var(--mono); font-size: .65rem; font-weight: 400;
+  letter-spacing: .1em; text-transform: uppercase; margin-bottom: .3rem;
+}
+.insight-core { border-left-color: #4B6B4E; }
+.insight-core strong { color: #4B6B4E; }
+.insight-when { border-left-color: var(--steel); }
+.insight-when strong { color: var(--steel); }
+.insight-warn { border-left-color: var(--rust); }
+.insight-warn strong { color: var(--rust); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 460px) {
+  /* Nine controls do not fit a phone; the speed slider is the one that can
+     go, since the transport buttons cannot. */
+  .algo-controls { padding: 0 0.9rem; gap: 0.45rem; }
+  .speed-wrap { display: none; }
+}
+@media (max-width: 780px) {
+  body { overflow: auto; }
+  .algo-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .algo-canvas-wrap {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    height: 56vw;
+    min-height: 240px;
+  }
+  .algo-info { height: auto; max-height: 320px; }
+}

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LCS · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Longest Common Subsequence</span>
+    <span class="algo-category">Dynamic Programming</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Finding the longest shared subsequence in two DNA strands, like spotting the common pattern.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">for i in range(1, m+1):</span>
+          <span class="code-line">  for j in range(1, n+1):</span>
+          <span class="code-line">    if X[i-1] == Y[j-1]:</span>
+          <span class="code-line">      dp[i][j] = dp[i-1][j-1] + 1  // match</span>
+          <span class="code-line">    else:</span>
+          <span class="code-line">      dp[i][j] = max(dp[i-1][j], dp[i][j-1])</span>
+          <span class="code-line">// traceback from (m,n) to find actual LCS</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(mn)</strong>, fills every cell of the m×n DP matrix exactly once</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(mn)</strong> for full matrix, reducible to <strong>O(min(m,n))</strong> if only the length is needed</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>If characters match, extend the diagonal (previous LCS + 1). Otherwise, take the best of skipping either character. The table encodes all possible alignments simultaneously.</li>
+          <li class="insight insight-when"><strong>When to use</strong>git diff (finding what changed between files), DNA sequence alignment, spell checking, file comparison tools, and version control systems all use LCS at their core.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>LCS ≠ longest common <em>substring</em>. A subsequence can skip characters; a substring must be contiguous. "ABCD" and "ACBD" have LCS length 3 but no common substring longer than 1.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    /* ── Problem data ── */
+    const X = 'ABCBDAB';  // along columns (j)
+    const Y = 'BDCAB';    // along rows    (i)
+    const M = Y.length;   // rows    = 5
+    const N = X.length;   // columns = 7
+
+    /* dp[i][j]: i=0..M, j=0..N */
+    const dp = Array.from({ length: M + 1 }, () => new Array(N + 1).fill(0));
+
+    /* ── Build steps ── */
+    function buildSteps() {
+      const steps = [];
+      function snap() { return dp.map(r => r.slice()); }
+
+      steps.push({
+        desc: `LCS of X="${X}" and Y="${Y}". Base case: dp[0][j]=0, dp[i][0]=0. Fill row by row…`,
+        lines: [],
+        table: snap(),
+        active: null,
+        matchCell: null,
+        tracePath: null,
+        lcsStr: '',
+      });
+
+      for (let i = 1; i <= M; i++) {
+        for (let j = 1; j <= N; j++) {
+          const match = X[j - 1] === Y[i - 1];
+          if (match) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+            steps.push({
+              desc: `X[${j-1}]='${X[j-1]}' == Y[${i-1}]='${Y[i-1]}' matches. dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = ${dp[i][j]}.`,
+              lines: [0, 1, 2, 3],
+              table: snap(),
+              active: [i, j],
+              matchCell: [i - 1, j - 1],
+              tracePath: null,
+              lcsStr: '',
+              isMatch: true,
+            });
+          } else {
+            const up   = dp[i - 1][j];
+            const left = dp[i][j - 1];
+            dp[i][j] = Math.max(up, left);
+            const src = up >= left ? 'up' : 'left';
+            steps.push({
+              desc: `X[${j-1}]='${X[j-1]}' ≠ Y[${i-1}]='${Y[i-1]}'. dp[${i}][${j}] = max(up=${up}, left=${left}) = ${dp[i][j]} (from ${src}).`,
+              lines: [0, 1, 4, 5],
+              table: snap(),
+              active: [i, j],
+              upCell:   [i - 1, j],
+              leftCell: [i, j - 1],
+              tracePath: null,
+              lcsStr: '',
+              isMatch: false,
+            });
+          }
+        }
+      }
+
+      /* ── Traceback ── */
+      steps.push({
+        desc: `Table complete! LCS length = dp[${M}][${N}] = ${dp[M][N]}. Now tracing back from (${M},${N}) to find the actual subsequence…`,
+        lines: [6],
+        table: snap(),
+        active: [M, N],
+        tracePath: [],
+        lcsStr: '',
+      });
+
+      // Trace
+      let i = M, j = N;
+      const path = [];
+      const lcsChars = [];
+      while (i > 0 && j > 0) {
+        if (X[j - 1] === Y[i - 1]) {
+          path.push({ i, j, dir: 'diag' });
+          lcsChars.unshift(X[j - 1]);
+          i--; j--;
+          steps.push({
+            desc: `X[${j}]='${X[j]}' == Y[${i}]='${Y[i]}' → diagonal move, '${X[j]}' is in LCS. LCS so far: "${lcsChars.join('')}"`,
+            lines: [6],
+            table: snap(),
+            active: [i, j],
+            tracePath: path.slice(),
+            lcsStr: lcsChars.join(''),
+          });
+        } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+          path.push({ i, j, dir: 'up' });
+          i--;
+          steps.push({
+            desc: `dp[${i+1}-1][${j}]=${dp[i][j]} >= dp[${i+1}][${j}-1]=${dp[i+1][j-1]} → move up to (${i},${j}).`,
+            lines: [6],
+            table: snap(),
+            active: [i, j],
+            tracePath: path.slice(),
+            lcsStr: lcsChars.join(''),
+          });
+        } else {
+          path.push({ i, j, dir: 'left' });
+          j--;
+          steps.push({
+            desc: `dp[${i}][${j+1}-1]=${dp[i][j]} > dp[${i}-1][${j+1}]=${dp[i-1][j+1]} → move left to (${i},${j}).`,
+            lines: [6],
+            table: snap(),
+            active: [i, j],
+            tracePath: path.slice(),
+            lcsStr: lcsChars.join(''),
+          });
+        }
+      }
+
+      const lcs = lcsChars.join('');
+      steps.push({
+        desc: `Done! LCS = "${lcs}" (length ${lcs.length}). Diagonal cells (orange) are the matched characters.`,
+        lines: [6],
+        table: snap(),
+        active: null,
+        tracePath: path.slice(),
+        lcsStr: lcs,
+        done: true,
+      });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw ── */
+    function draw(ctx, step, W, H) {
+      if (!step) return;
+
+      /* Layout */
+      const LABEL_X  = 18;   // left padding before Y labels
+      const LABEL_Y  = 18;   // top padding before X labels
+      const HEADER_H = 32;   // header row height
+      const HEADER_W = 36;   // left label column width
+      const PAD_BOT  = 36;
+
+      const ROWS = M + 1;
+      const COLS = N + 1;
+
+      const availW = W - LABEL_X - HEADER_W - 10;
+      const availH = H - LABEL_Y - HEADER_H - PAD_BOT;
+      const cellW  = Math.min(60, Math.floor(availW / COLS));
+      const cellH  = Math.min(50, Math.floor(availH / ROWS));
+
+      const gridStartX = LABEL_X + HEADER_W;
+      const gridStartY = LABEL_Y + HEADER_H;
+      // centre the grid
+      const totalGridW = cellW * COLS;
+      const totalGridH = cellH * ROWS;
+      const offX = Math.max(0, (W - LABEL_X - HEADER_W - totalGridW) / 2);
+      const offY = Math.max(0, (H - LABEL_Y - HEADER_H - PAD_BOT - totalGridH) / 2);
+
+      const table     = step.table     || dp.map(r => r.slice());
+      const active    = step.active;
+      const matchCell = step.matchCell;
+      const upCell    = step.upCell;
+      const leftCell  = step.leftCell;
+      const tracePath = step.tracePath;
+      const lcsStr    = step.lcsStr || '';
+
+      function cellRect(i, j) {
+        return {
+          x: gridStartX + offX + j * cellW,
+          y: gridStartY + offY + i * cellH,
+          w: cellW,
+          h: cellH,
+        };
+      }
+
+      /* ── Column headers (X chars, j=0..N) ── */
+      // j=0 is the empty column
+      centreText(ctx, '""', gridStartX + offX + cellW / 2, LABEL_Y + HEADER_H / 2, {
+        font: '10px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.45)',
+      });
+      for (let j = 1; j <= N; j++) {
+        centreText(ctx, X[j - 1], gridStartX + offX + j * cellW + cellW / 2, LABEL_Y + HEADER_H / 2, {
+          font: 'bold 13px "Newsreader", Georgia, serif',
+          color: C.teal,
+        });
+        centreText(ctx, `${j-1}`, gridStartX + offX + j * cellW + cellW / 2, LABEL_Y + HEADER_H / 2 + 13, {
+          font: '9px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.38)',
+        });
+      }
+      // X= label
+      centreText(ctx, 'X→', gridStartX + offX - 22, LABEL_Y + HEADER_H / 2, {
+        font: '9px "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.38)',
+      });
+
+      /* ── Row headers (Y chars, i=0..M) ── */
+      centreText(ctx, '""', LABEL_X + HEADER_W / 2, gridStartY + offY + cellH / 2, {
+        font: '10px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.45)',
+      });
+      for (let i = 1; i <= M; i++) {
+        centreText(ctx, Y[i - 1], LABEL_X + HEADER_W / 2, gridStartY + offY + i * cellH + cellH / 2 - 6, {
+          font: 'bold 13px "Newsreader", Georgia, serif',
+          color: C.purple,
+        });
+        centreText(ctx, `${i-1}`, LABEL_X + HEADER_W / 2, gridStartY + offY + i * cellH + cellH / 2 + 7, {
+          font: '9px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.38)',
+        });
+      }
+      centreText(ctx, 'Y↓', LABEL_X + HEADER_W / 2, gridStartY + offY - 10, {
+        font: '9px "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.38)',
+      });
+
+      /* ── Cells ── */
+      for (let i = 0; i <= M; i++) {
+        for (let j = 0; j <= N; j++) {
+          const r = cellRect(i, j);
+          const isActive = active && active[0] === i && active[1] === j;
+          const isMatch  = matchCell && matchCell[0] === i && matchCell[1] === j;
+          const isUp     = upCell   && upCell[0]   === i && upCell[1]   === j;
+          const isLeft   = leftCell && leftCell[0] === i && leftCell[1] === j;
+          const inTrace  = tracePath && tracePath.some(p => p.i === i && p.j === j);
+
+          let fill   = 'rgba(28,26,22,0.06)';
+          let stroke = 'rgba(28,26,22,0.14)';
+          let sw     = 1;
+          let tc     = 'rgba(28,26,22,0.38)';
+
+          if (isActive && step.isMatch) {
+            fill   = 'rgba(75,107,78,0.18)';
+            stroke = C.green;
+            sw     = 2.5;
+            tc     = C.green;
+          } else if (isActive) {
+            fill   = 'rgba(84,98,107,0.18)';
+            stroke = C.blue;
+            sw     = 2.5;
+            tc     = C.blue;
+          } else if (inTrace) {
+            fill   = 'rgba(192,112,58,0.18)';
+            stroke = C.orange;
+            sw     = 2;
+            tc     = C.orange;
+          } else if (isMatch) {
+            fill   = 'rgba(75,107,78,0.10)';
+            stroke = C.green;
+            sw     = 1.5;
+            tc     = C.green;
+          } else if (isUp || isLeft) {
+            fill   = 'rgba(84,98,107,0.10)';
+            stroke = C.blue;
+            sw     = 1.5;
+            tc     = C.blue;
+          } else if (table[i][j] > 0 || (i === 0 || j === 0)) {
+            fill   = 'rgba(28,26,22,0.11)';
+            stroke = 'rgba(28,26,22,0.17)';
+            tc     = 'rgba(28,26,22,0.65)';
+          }
+
+          ctx.fillStyle   = fill;
+          roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4);
+          ctx.fill();
+
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth   = sw;
+          roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4);
+          ctx.stroke();
+
+          // value
+          const val = table[i][j];
+          if (i === 0 || j === 0) {
+            centreText(ctx, '0', r.x + r.w / 2, r.y + r.h / 2, {
+              font: '12px SF Mono, monospace',
+              color: 'rgba(28,26,22,0.38)',
+            });
+          } else if (val > 0) {
+            centreText(ctx, `${val}`, r.x + r.w / 2, r.y + r.h / 2, {
+              font: `bold 13px SF Mono, monospace`,
+              color: tc,
+            });
+          }
+        }
+      }
+
+      /* ── Traceback arrows ── */
+      if (tracePath && tracePath.length > 0) {
+        for (let k = 0; k < tracePath.length - 1; k++) {
+          const a = tracePath[k];
+          const b = tracePath[k + 1];
+          const ra = cellRect(a.i, a.j);
+          const rb = cellRect(b.i, b.j);
+          arrow(
+            ctx,
+            ra.x + ra.w / 2, ra.y + ra.h / 2,
+            rb.x + rb.w / 2, rb.y + rb.h / 2,
+            C.orange
+          );
+        }
+      }
+
+      /* ── LCS result badge ── */
+      if (lcsStr) {
+        const badgeW = Math.min(220, lcsStr.length * 14 + 80);
+        ctx.fillStyle = 'rgba(192,112,58,0.15)';
+        roundRect(ctx, W - badgeW - 10, 10, badgeW, 26, 6);
+        ctx.fill();
+        ctx.strokeStyle = C.orange;
+        ctx.lineWidth = 1;
+        roundRect(ctx, W - badgeW - 10, 10, badgeW, 26, 6);
+        ctx.stroke();
+        centreText(ctx, `LCS: "${lcsStr}"  len=${lcsStr.length}`, W - badgeW / 2 - 10, 23, {
+          font: 'bold 11px SF Mono, monospace',
+          color: C.orange,
+        });
+      }
+
+      /* ── Formula strip ── */
+      ctx.fillStyle = 'rgba(28,26,22,0.06)';
+      roundRect(ctx, LABEL_X, H - PAD_BOT + 4, W - LABEL_X * 2, 22, 5);
+      ctx.fill();
+      centreText(ctx, 'if X[i]==Y[j]: dp[i][j]=dp[i-1][j-1]+1   else: dp[i][j]=max(dp[i-1][j], dp[i][j-1])', W / 2, H - PAD_BOT + 15, {
+        font: '9px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.45)',
+      });
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

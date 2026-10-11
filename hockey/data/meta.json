@@ -1,0 +1,61 @@
+{
+  "total_shots": 956147,
+  "total_goals": 59644,
+  "overall_goal_rate": 0.0624,
+  "overall_avg_xG": 0.0619,
+  "seasons": [
+    20102011,
+    20112012,
+    20122013,
+    20132014,
+    20142015,
+    20152016,
+    20162017,
+    20172018,
+    20182019,
+    20192020
+  ],
+  "models": {
+    "xgboost": {
+      "auc": 0.7639,
+      "brier": 0.05702,
+      "ece": 0.15729
+    },
+    "deep_mlp": {
+      "auc": 0.7667,
+      "brier": 0.05688,
+      "ece": 0.176
+    },
+    "lstm": {
+      "auc": 0.7615,
+      "brier": 0.05695,
+      "ece": 0.15322
+    },
+    "transformer": {
+      "auc": 0.7639,
+      "brier": 0.05681,
+      "ece": 0.02563
+    },
+    "ensemble": {
+      "auc": 0.7705,
+      "brier": 0.05773,
+      "ece": 0.21797
+    }
+  },
+  "league_benchmarks": {
+    "high_danger_pct": 0.2001,
+    "medium_danger_pct": 0.3091,
+    "low_danger_pct": 0.4908,
+    "rebound_rate": 0.0476,
+    "pp_avg_xG": 0.0736,
+    "ev_avg_xG": 0.0598,
+    "sh_avg_xG": 0.0625
+  },
+  "train_val_test_split": {
+    "train": "20102011\u201320162017",
+    "val": "20172018",
+    "test": "20182019, 20192020",
+    "n_test": 200820
+  },
+  "calibration_method": "IsotonicRegression (sklearn), fit on training seasons"
+}

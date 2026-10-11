@@ -1,0 +1,47 @@
+{
+  "XGBoost": {
+    "auc": 0.7639,
+    "ece": 0.00675,
+    "brier_score": 0.05702,
+    "reliability": 0.00022,
+    "resolution": 0.00304,
+    "uncertainty": 0.06056,
+    "n_test": 200820
+  },
+  "Deep MLP": {
+    "auc": 0.7667,
+    "ece": 0.00552,
+    "brier_score": 0.05688,
+    "reliability": 0.00013,
+    "resolution": 0.00298,
+    "uncertainty": 0.06056,
+    "n_test": 200820
+  },
+  "LSTM": {
+    "auc": 0.7615,
+    "ece": 0.00565,
+    "brier_score": 0.05695,
+    "reliability": 7e-05,
+    "resolution": 0.00294,
+    "uncertainty": 0.06056,
+    "n_test": 200820
+  },
+  "Transformer": {
+    "auc": 0.7639,
+    "ece": 0.00495,
+    "brier_score": 0.05681,
+    "reliability": 5e-05,
+    "resolution": 0.00313,
+    "uncertainty": 0.06056,
+    "n_test": 200820
+  },
+  "Ensemble": {
+    "auc": 0.7705,
+    "ece": 0.01138,
+    "brier_score": 0.05773,
+    "reliability": 0.00094,
+    "resolution": 0.00306,
+    "uncertainty": 0.06056,
+    "n_test": 200820
+  }
+}

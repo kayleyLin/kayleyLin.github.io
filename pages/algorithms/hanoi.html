@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tower of Hanoi · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Tower of Hanoi</span>
+    <span class="algo-category">Recursion &amp; D&amp;C</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Moving rings by one rule is the simplest possible recursion, it writes itself.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function hanoi(n, from, to, aux):</span>
+          <span class="code-line">  if n == 0: return</span>
+          <span class="code-line">  hanoi(n-1, from, aux, to)   // move n-1 out of way</span>
+          <span class="code-line">  move disk n: from → to       // move the big disk</span>
+          <span class="code-line">  hanoi(n-1, aux, to, from)   // stack n-1 on top</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(2ⁿ)</strong>, n=4 needs 15 moves; n=30 needs over a billion</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(n)</strong>, one stack frame per recursion depth</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>The n−1 sub-problem must be solved twice, once to expose the bottom disk, once to rebuild on top. There is no shortcut.</li>
+          <li class="insight insight-when"><strong>When to use</strong>The canonical example for teaching recursion. The algorithm structure IS the proof of correctness, no iterative version is more intuitive.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>2ⁿ growth is brutal. n=64 disks would take longer than the age of the universe to complete at one move per second.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    /* ── Color map for each disk (1=smallest, 4=largest) ── */
+    const DISK_COLORS = {
+      1: '#BB4A2C',   // red
+      2: '#C0703A',   // orange
+      3: '#97711A',   // yellow
+      4: '#4B6B4E',   // green
+    };
+
+    const PEG_LABELS = ['A', 'B', 'C'];
+
+    /* ── Pre-compute all moves via recursion ── */
+    const moves = [];  // each entry: { disk, from, to }
+
+    function computeHanoi(n, from, to, aux) {
+      if (n === 0) return;
+      computeHanoi(n - 1, from, aux, to);
+      moves.push({ disk: n, from, to });
+      computeHanoi(n - 1, aux, to, from);
+    }
+
+    computeHanoi(4, 0, 2, 1);  // peg indices 0,1,2
+
+    /* ── Build steps: initial state + one state per move ── */
+    function clonePegs(pegs) {
+      return pegs.map(p => [...p]);
+    }
+
+    function buildSteps() {
+      const steps = [];
+      let pegs = [[4, 3, 2, 1], [], []];  // index 0 = bottom disk
+
+      // Initial state
+      steps.push({
+        pegs: clonePegs(pegs),
+        desc: 'Initial state: all 4 disks on peg A, largest at bottom.',
+        lines: [0],
+        from: -1, to: -1, disk: -1
+      });
+
+      // Determine pseudocode line based on move depth (simplified: alternate sub-calls)
+      // We'll annotate each move with relevant lines
+      moves.forEach((m, i) => {
+        const p = clonePegs(pegs);
+        const disk = p[m.from].pop();
+        p[m.to].push(disk);
+        pegs = p;
+
+        steps.push({
+          pegs: clonePegs(pegs),
+          desc: `Move disk ${m.disk} from peg ${PEG_LABELS[m.from]} to peg ${PEG_LABELS[m.to]}.`,
+          lines: m.disk === 4 ? [3] : (i % 2 === 0 ? [2] : [4]),
+          from: m.from,
+          to: m.to,
+          disk: m.disk,
+          moveIdx: i
+        });
+      });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw function ── */
+    function draw(ctx, step, W, H) {
+      const pegCount = 3;
+      const pegW = 10;
+      const baseH = 14;
+      const diskH = 18;
+      const maxDiskW = Math.min(W * 0.28, 160);
+      const minDiskW = maxDiskW * 0.28;
+      const pegSpacing = W / pegCount;
+      const pegCentreY = H - 70;
+      const pegTopY = pegCentreY - diskH * 4 - 20;
+      const baseY = pegCentreY + 2;
+
+      /* Background grid lines (subtle) */
+      ctx.strokeStyle = 'rgba(28,26,22,0.04)';
+      ctx.lineWidth = 1;
+      for (let y = 40; y < H - 40; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      /* Draw bases */
+      step.pegs.forEach((_, pi) => {
+        const cx = pegSpacing * pi + pegSpacing / 2;
+        ctx.fillStyle = 'rgba(28,26,22,0.16)';
+        roundRect(ctx, cx - maxDiskW / 2 - 4, baseY, maxDiskW + 8, baseH, 4);
+        ctx.fill();
+      });
+
+      /* Draw peg rods */
+      step.pegs.forEach((_, pi) => {
+        const cx = pegSpacing * pi + pegSpacing / 2;
+        const gradient = ctx.createLinearGradient(cx - pegW / 2, pegTopY, cx + pegW / 2, pegTopY);
+        gradient.addColorStop(0, 'rgba(28,26,22,0.33)');
+        gradient.addColorStop(1, 'rgba(28,26,22,0.14)');
+        ctx.fillStyle = gradient;
+        roundRect(ctx, cx - pegW / 2, pegTopY, pegW, baseY - pegTopY, 3);
+        ctx.fill();
+      });
+
+      /* Draw peg labels */
+      step.pegs.forEach((_, pi) => {
+        const cx = pegSpacing * pi + pegSpacing / 2;
+        centreText(ctx, PEG_LABELS[pi], cx, baseY + baseH + 16, {
+          font: 'bold 15px "Newsreader", Georgia, serif',
+          color: 'rgba(28,26,22,0.55)'
+        });
+      });
+
+      /* Highlight from/to pegs */
+      if (step.from >= 0) {
+        [step.from, step.to].forEach((pi, idx) => {
+          const cx = pegSpacing * pi + pegSpacing / 2;
+          ctx.fillStyle = idx === 0
+            ? 'rgba(187,74,44,0.07)'
+            : 'rgba(75,107,78,0.09)';
+          roundRect(ctx, cx - maxDiskW / 2 - 8, pegTopY - 10, maxDiskW + 16, baseY - pegTopY + baseH + 10, 8);
+          ctx.fill();
+        });
+      }
+
+      /* Draw disks */
+      step.pegs.forEach((diskStack, pi) => {
+        const cx = pegSpacing * pi + pegSpacing / 2;
+        diskStack.forEach((diskNum, di) => {
+          // di=0 is bottom, stack up
+          const diskW = minDiskW + ((diskNum - 1) / 3) * (maxDiskW - minDiskW);
+          const dy = baseY - (di + 1) * diskH - di * 2;
+          const color = DISK_COLORS[diskNum];
+
+          /* Disk shadow */
+          ctx.fillStyle = 'rgba(28,26,22,0.12)';
+          roundRect(ctx, cx - diskW / 2 + 2, dy + 3, diskW, diskH, 5);
+          ctx.fill();
+
+          /* Disk body */
+          const grad = ctx.createLinearGradient(cx, dy, cx, dy + diskH);
+          grad.addColorStop(0, color);
+          grad.addColorStop(1, shadeColor(color, -30));
+          ctx.fillStyle = grad;
+          roundRect(ctx, cx - diskW / 2, dy, diskW, diskH, 5);
+          ctx.fill();
+
+          /* Disk highlight */
+          ctx.fillStyle = 'rgba(28,26,22,0.27)';
+          roundRect(ctx, cx - diskW / 2 + 4, dy + 2, diskW - 8, 4, 2);
+          ctx.fill();
+
+          /* Disk number label */
+          centreText(ctx, String(diskNum), cx, dy + diskH / 2, {
+            font: `bold ${diskH - 5}px "Newsreader", Georgia, serif`,
+            color: 'rgba(243,239,230,0.95)'
+          });
+        });
+      });
+
+      /* Move counter badge */
+      if (step.moveIdx !== undefined) {
+        ctx.fillStyle = 'rgba(187,74,44,0.25)';
+        roundRect(ctx, W - 110, 12, 98, 28, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(84,98,107,0.4)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        centreText(ctx, `Move ${step.moveIdx + 1} / ${moves.length}`, W - 61, 26, {
+          font: '11px SF Mono, monospace',
+          color: '#5F7F8C'
+        });
+      }
+
+      /* Arrow from→to */
+      if (step.from >= 0 && step.to >= 0) {
+        const cx1 = pegSpacing * step.from + pegSpacing / 2;
+        const cx2 = pegSpacing * step.to + pegSpacing / 2;
+        const arrowY = pegTopY - 18;
+        const color = DISK_COLORS[step.disk] || 'rgba(28,26,22,0.4)';
+        arrow(ctx, cx1, arrowY, cx2, arrowY, color + 'cc');
+      }
+    }
+
+    /* Darken a hex color by amt (0-255) */
+    function shadeColor(hex, amt) {
+      const num = parseInt(hex.slice(1), 16);
+      const r = Math.max(0, Math.min(255, (num >> 16) + amt));
+      const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amt));
+      const b = Math.max(0, Math.min(255, (num & 0xff) + amt));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

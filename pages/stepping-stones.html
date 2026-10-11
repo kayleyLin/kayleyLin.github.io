@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stepping-Stones · Kayley Lin Working Notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=95b6d20b" />
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Kayley Lin <small>Working Notebook</small></div>
+    <nav id="main-nav">
+      <a href="ee.html">Extended Essay</a>
+      <a href="pioneer.html">Pioneer</a>
+      <a href="floorball.html">Floorball</a>
+      <a href="nhl.html">NHL</a>
+      <a href="stepping-stones.html">Stepping-Stones</a>
+      <a href="about.html">About</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <span class="bar-line"></span><span class="bar-line"></span><span class="bar-line"></span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <a class="back-link" href="../index.html">← back to notebook</a>
+
+  <section class="detail-hero">
+    <p class="level">Project <b>05</b> of 06</p>
+    <p class="mono eyebrow">Stepping-Stones · 铺路石 · Shanghai · four years</p>
+    <h1>A curriculum, and the scheduling problem behind it</h1>
+    <p class="detail-lead">
+      Stepping-Stones is a volunteer teaching organization in Shanghai. Four years there
+      produced two pieces of work. The first is a way of teaching programming to
+      beginners. The second is the tool the organization needed once the teaching had
+      shown where its actual bottleneck was.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <section class="three-part">
+
+    <div class="three-part-section">
+      <h2>One · teaching Java, four years, fifty-odd students</h2>
+      <p>
+        The method is analogy-first, and it has three steps that never change order. A
+        concrete situation the student already understands. An explicit bridge from that
+        situation to the mechanism. Then the point where the analogy breaks.
+      </p>
+      <p>
+        The third step took four years to start taking seriously. Every analogy fails
+        somewhere, and a student who walks into the failure without warning concludes they
+        misunderstood the algorithm, when in fact they understood the analogy correctly and
+        the analogy ran out. Writing the failure point into the lesson is cheaper than
+        rebuilding a student's confidence afterwards.
+      </p>
+      <div class="media-block">
+        <span class="fig-label">A session in progress</span>
+        <img src="../public/assets/about/teaching-classroom.jpg"
+             srcset="../public/assets/about/teaching-classroom@800.jpg 800w, ../public/assets/about/teaching-classroom.jpg 1600w"
+             sizes="(max-width: 700px) 100vw, 640px"
+             alt="A classroom with students at laptops facing a projector screen showing code, and one person standing at the front presenting." />
+      </div>
+      <p class="facts">
+        4 analogy write-ups · 1 full lesson plan · 21 curriculum topics · 16 algorithm visualisers ·
+        <a href="https://github.com/kayleyLin/Stepping-Stones">GitHub ↗</a>
+      </p>
+      <p>
+        <a class="link" href="teaching.html"><span class="arr">→</span> the method and the visualisers in full</a>
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Two · assigning forty volunteers to thirty classes</h2>
+      <p>
+        After the teaching term the organization needed to decide who goes where. The
+        obvious framing is a commute problem and the obvious framing is wrong. Their own
+        stated first priority settled it: close but at the wrong time is not a candidate at
+        all. So time matching is a hard constraint and everything else is solved in strict
+        priority order rather than as a weighted sum.
+      </p>
+      <table class="dtable">
+        <caption>Objectives, solved in sequence. Each level locks before the next is considered.</caption>
+        <thead><tr><th class="n">Order</th><th>Objective</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td>Cover as many classes as possible with at least one volunteer</td></tr>
+          <tr><td class="n">2</td><td>Seat as many volunteers as possible</td></tr>
+          <tr><td class="n">3</td><td>Minimize total commute</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Solving the levels in sequence means there are no weights to tune, and each level
+        corresponds to something the organization actually said rather than to a
+        coefficient someone chose. Two implementations share the model: a single-file web
+        page the scheduler opens by double-clicking, using a min-cost flow with convex cost
+        arcs, and a Python command-line version using CP-SAT. They are checked against each
+        other to confirm they agree.
+      </p>
+      <table class="dtable">
+        <caption>One term: 40 volunteers, 30 classes, 60 places</caption>
+        <thead><tr><th>Result</th><th class="n">Value</th></tr></thead>
+        <tbody>
+          <tr><td>Volunteers seated</td><td class="n">36 of 40</td></tr>
+          <tr><td>Classes with at least one volunteer</td><td class="n">27 of 30</td></tr>
+          <tr><td>Classes fully staffed</td><td class="n">9 of 30</td></tr>
+          <tr><td>Mean commute, one way</td><td class="n">25.8 min</td></tr>
+          <tr><td>Structural shortfall</td><td class="n">20 places</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Each volunteer takes one class, so forty is the ceiling against sixty places and
+        twenty of them cannot be filled by any assignment. Three classes got nobody, and
+        one of those had zero available volunteers for its slot, which is a recruitment
+        problem wearing a scheduling problem's clothes. The supply-and-demand table showing
+        Sunday morning short by five and Friday evening heavily oversubscribed is probably
+        worth more to the organization than the roster itself.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Where the commute estimate stops being usable</h2>
+      <p>
+        Without a map API the tool builds its own graph of the Shanghai metro, 24 lines and
+        416 stations, and estimates travel time from station geometry with a fixed transfer
+        penalty. Checked against twelve station pairs, nine land inside a common-sense
+        range and the rest are two to five minutes out.
+      </p>
+      <p>
+        That is accurate enough to find a structural gap and not accurate enough to be a
+        scheduling authority, because the fixed transfer penalty is exactly the assumption
+        that fails. Two stations can be close on a map, on different lines, and a long way
+        apart in practice. The documentation says to connect a real map API before the
+        output is used for real, and lists four further gaps: no service start and end
+        dates, no returning-volunteer flag, no last-mile address, and time resolution only
+        down to morning, afternoon or evening.
+      </p>
+    </div>
+
+  </section>
+
+  <nav class="pager">
+    <a href="pioneer.html"><span class="pg-label">← Previous</span>Pioneer</a>
+    <a class="pg-next" href="about.html"><span class="pg-label">Next →</span>About</a>
+  </nav>
+
+  <footer>
+    <span>Kayley Lin · working notebook</span>
+    <span>Fraunces &amp; JetBrains Mono</span>
+  </footer>
+
+</main>
+
+<script src="../scripts/main.js?v=32519cdf"></script>
+
+</body>
+</html>

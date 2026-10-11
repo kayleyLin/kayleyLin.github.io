@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DFS · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    .stack-block { margin-top: 0.75rem; }
+    .stack-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(28,26,22,0.42);
+      margin-bottom: 0.45rem;
+    }
+    .stack-cells {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 3px;
+      max-height: 130px;
+      overflow-y: auto;
+    }
+    .stack-cell {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      background: rgba(192,112,58,0.18);
+      color: #C0703A;
+      border: 1px solid rgba(192,112,58,0.35);
+      border-radius: 4px;
+      padding: 2px 8px;
+      width: fit-content;
+    }
+    .stack-cell.top {
+      background: rgba(192,112,58,0.32);
+      border-color: rgba(192,112,58,0.65);
+      color: #97711A;
+    }
+    .stack-empty {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      color: rgba(28,26,22,0.38);
+    }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">DFS, Depth-First Search</span>
+    <span class="algo-category">Graph &amp; Search</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Exploring a cave, go as deep as possible down one tunnel before backtracking.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function dfs(node):</span>
+          <span class="code-line">  visited.add(node)</span>
+          <span class="code-line">  mark node as visiting</span>
+          <span class="code-line">  for neighbor in adj[node]:</span>
+          <span class="code-line">    if not visited: dfs(neighbor)</span>
+          <span class="code-line">  mark node as fully explored</span>
+        </div>
+        <div class="stack-block">
+          <div class="stack-label">Call Stack (top = active)</div>
+          <div class="stack-cells" id="stack-display">
+            <span class="stack-empty">empty</span>
+          </div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(V + E)</strong>, every vertex and edge visited exactly once in a complete traversal</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(V)</strong> stack depth worst case, <strong>O(depth)</strong> for typical trees and sparse graphs</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Goes as deep as possible along each branch before backtracking. Naturally produces a DFS tree where back edges indicate cycles.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Cycle detection, topological sorting (reverse post-order), finding strongly connected components (Kosaraju/Tarjan), maze solving, generating permutations.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>On cyclic graphs, must track visited nodes or DFS loops forever. Deep recursion can cause stack overflow, iterative DFS with an explicit stack avoids this.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1/1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Graph definition ──────────────────────────────────────── */
+  // Nodes 0-7 in a tree-like layout
+  // Edges: 0→1, 0→2, 1→3, 1→4, 2→5, 2→6, 3→7, 4→7
+  const ADJ = {
+    0: [1, 2],
+    1: [3, 4],
+    2: [5, 6],
+    3: [7],
+    4: [7],
+    5: [],
+    6: [],
+    7: [],
+  };
+
+  const EDGE_LIST = [
+    [0,1],[0,2],[1,3],[1,4],[2,5],[2,6],[3,7],[4,7]
+  ];
+
+  /* ── Pre-compute DFS traversal ─────────────────────────────── */
+  // nodeState: 'unvisited' | 'onstack' | 'visiting' | 'explored'
+  // edgeState: 'default' | 'tree' | 'back'
+
+  function buildSteps() {
+    const steps = [];
+    const nodeStates = {};
+    const edgeStates = {};
+    for (let i = 0; i < 8; i++) nodeStates[i] = 'unvisited';
+    for (const [u,v] of EDGE_LIST) edgeStates[`${u}-${v}`] = 'default';
+
+    const visited = new Set();
+    const callStack = [];   // node labels currently in call stack
+
+    function snapshot(desc, lines) {
+      steps.push({
+        nodeStates: { ...nodeStates },
+        edgeStates: { ...edgeStates },
+        stack: [...callStack],
+        desc,
+        lines,
+      });
+    }
+
+    snapshot('Ready to start DFS from node 0.', [0]);
+
+    function dfs(node) {
+      visited.add(node);
+      nodeStates[node] = 'visiting';
+      callStack.push(node);
+      snapshot(`dfs(${node}) called. Mark node ${node} as visiting.`, [1, 2]);
+
+      for (const nb of ADJ[node]) {
+        const eKey = `${node}-${nb}`;
+        if (!visited.has(nb)) {
+          edgeStates[eKey] = 'tree';
+          snapshot(`Visit neighbour ${nb} from ${node}, tree edge.`, [3, 4]);
+          dfs(nb);
+          snapshot(`Returned to dfs(${node}) after exploring ${nb}.`, [3, 4]);
+        } else {
+          edgeStates[eKey] = 'back';
+          snapshot(`Neighbour ${nb} already visited from ${node}, back edge.`, [3, 4]);
+        }
+      }
+
+      nodeStates[node] = 'explored';
+      callStack.pop();
+      snapshot(`dfs(${node}) complete, node ${node} fully explored.`, [5]);
+    }
+
+    dfs(0);
+    snapshot('DFS complete. All reachable nodes explored.', [5]);
+    return steps;
+  }
+
+  /* ── Canvas node positions ─────────────────────────────────── */
+  // Placed as a balanced binary tree layout:
+  //        0
+  //      1   2
+  //    3  4  5  6
+  //      7
+  //
+  // We'll compute these dynamically from W/H at draw time.
+  function nodePos(W, H) {
+    const cx = W / 2;
+    const top = H * 0.10;
+    const vGap = H * 0.20;
+    const hGap = W * 0.17;
+    return {
+      0: [cx,            top],
+      1: [cx - hGap,     top + vGap],
+      2: [cx + hGap,     top + vGap],
+      3: [cx - hGap*1.7, top + vGap*2],
+      4: [cx - hGap*0.4, top + vGap*2],
+      5: [cx + hGap*0.4, top + vGap*2],
+      6: [cx + hGap*1.7, top + vGap*2],
+      7: [cx - hGap,     top + vGap*3],
+    };
+  }
+
+  const NODE_R = 24;
+
+  /* ── Draw ──────────────────────────────────────────────────── */
+  function draw(ctx, step, W, H) {
+    ctx.clearRect(0, 0, W, H);
+    if (!step) return;
+
+    const pos = nodePos(W, H);
+
+    // ── Edges
+    for (const [u, v] of EDGE_LIST) {
+      const [x1,y1] = pos[u];
+      const [x2,y2] = pos[v];
+      const eKey = `${u}-${v}`;
+      const state = step.edgeStates[eKey] || 'default';
+
+      ctx.save();
+      if (state === 'tree') {
+        ctx.strokeStyle = C.blue;
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        // Draw as arrow
+        const angle = Math.atan2(y2-y1, x2-x1);
+        const tx = x2 - (NODE_R + 4) * Math.cos(angle);
+        const ty = y2 - (NODE_R + 4) * Math.sin(angle);
+        const sx = x1 + NODE_R * Math.cos(angle);
+        const sy = y1 + NODE_R * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        // Arrowhead
+        ctx.fillStyle = C.blue;
+        ctx.beginPath();
+        const hw = 9;
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - hw * Math.cos(angle - 0.38), ty - hw * Math.sin(angle - 0.38));
+        ctx.lineTo(tx - hw * Math.cos(angle + 0.38), ty - hw * Math.sin(angle + 0.38));
+        ctx.closePath();
+        ctx.fill();
+        // Glow
+        ctx.shadowColor = C.blue;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+      } else if (state === 'back') {
+        ctx.strokeStyle = C.red;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        // Offset back edge slightly to the right to avoid overlap
+        const angle = Math.atan2(y2-y1, x2-x1);
+        const perp = angle + Math.PI/2;
+        const off = 7;
+        const ox = Math.cos(perp)*off, oy = Math.sin(perp)*off;
+        const sx = x1 + NODE_R * Math.cos(angle) + ox;
+        const sy = y1 + NODE_R * Math.sin(angle) + oy;
+        const tx = x2 - (NODE_R+4) * Math.cos(angle) + ox;
+        const ty = y2 - (NODE_R+4) * Math.sin(angle) + oy;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.red;
+        ctx.beginPath();
+        const hw = 8;
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - hw * Math.cos(angle - 0.38), ty - hw * Math.sin(angle - 0.38));
+        ctx.lineTo(tx - hw * Math.cos(angle + 0.38), ty - hw * Math.sin(angle + 0.38));
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Default: dim directed edge
+        const angle = Math.atan2(y2-y1, x2-x1);
+        const tx = x2 - (NODE_R + 3) * Math.cos(angle);
+        const ty = y2 - (NODE_R + 3) * Math.sin(angle);
+        const sx = x1 + NODE_R * Math.cos(angle);
+        const sy = y1 + NODE_R * Math.sin(angle);
+        ctx.strokeStyle = 'rgba(28,26,22,0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(28,26,22,0.2)';
+        ctx.beginPath();
+        const hw = 7;
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - hw * Math.cos(angle - 0.38), ty - hw * Math.sin(angle - 0.38));
+        ctx.lineTo(tx - hw * Math.cos(angle + 0.38), ty - hw * Math.sin(angle + 0.38));
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // ── Nodes
+    const nodeColor = {
+      unvisited: 'rgba(28,26,22,0.12)',
+      onstack:   C.orange,
+      visiting:  C.yellow,
+      explored:  C.green,
+    };
+    const nodeStroke = {
+      unvisited: 'rgba(28,26,22,0.27)',
+      onstack:   C.orange,
+      visiting:  C.yellow,
+      explored:  C.green,
+    };
+    const nodeLabelColor = {
+      unvisited: C.dim,
+      onstack:   '#F3EFE6',
+      visiting:  '#F3EFE6',
+      explored:  '#F3EFE6',
+    };
+
+    for (let n = 0; n < 8; n++) {
+      const [x, y] = pos[n];
+      const state = step.nodeStates[n] || 'unvisited';
+      const fill = nodeColor[state];
+      const stroke = nodeStroke[state];
+      const labelC = nodeLabelColor[state];
+
+      ctx.save();
+      if (state === 'visiting') {
+        ctx.shadowColor = C.yellow;
+        ctx.shadowBlur = 18;
+      } else if (state === 'explored') {
+        ctx.shadowColor = C.green;
+        ctx.shadowBlur = 8;
+      } else if (state === 'onstack') {
+        ctx.shadowColor = C.orange;
+        ctx.shadowBlur = 10;
+      }
+
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = state === 'visiting' ? 2.5 : 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+      ctx.stroke();
+
+      centreText(ctx, String(n), x, y, {
+        font: `bold 15px -apple-system, "Newsreader", Georgia, serif`,
+        color: labelC,
+      });
+      ctx.restore();
+    }
+
+    // ── Legend (bottom-left)
+    const legend = [
+      { color: 'rgba(28,26,22,0.18)', stroke: 'rgba(28,26,22,0.38)', label: 'Unvisited' },
+      { color: C.yellow, stroke: C.yellow, label: 'Currently visiting' },
+      { color: C.green,  stroke: C.green,  label: 'Fully explored' },
+    ];
+    const lx = 16, ly = H - 14;
+    legend.forEach(({ color, stroke, label }, i) => {
+      const bx = lx, by = ly - (legend.length - i) * 22;
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(bx + 8, by, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      centreText(ctx, label, bx + 8 + 74, by, {
+        font: '11px -apple-system, "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.45)',
+      });
+    });
+
+    // Edge legend
+    ctx.save();
+    ctx.strokeStyle = C.blue;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(lx + 1, ly - 114);
+    ctx.lineTo(lx + 15, ly - 114);
+    ctx.stroke();
+    centreText(ctx, 'Tree edge', lx + 15 + 38, ly - 114, { font: '11px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.45)' });
+    ctx.strokeStyle = C.red;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath();
+    ctx.moveTo(lx + 1, ly - 94);
+    ctx.lineTo(lx + 15, ly - 94);
+    ctx.stroke();
+    ctx.restore();
+    centreText(ctx, 'Back edge', lx + 15 + 38, ly - 94, { font: '11px "Newsreader", Georgia, serif', color: 'rgba(28,26,22,0.45)' });
+
+    // ── Update stack display in right panel
+    const sEl = document.getElementById('stack-display');
+    if (sEl) {
+      if (step.stack.length === 0) {
+        sEl.innerHTML = '<span class="stack-empty">empty</span>';
+      } else {
+        // Show bottom-to-top; top is last
+        sEl.innerHTML = step.stack
+          .map((n, i) => {
+            const isTop = i === step.stack.length - 1;
+            return `<span class="stack-cell${isTop ? ' top' : ''}">dfs(${n})</span>`;
+          })
+          .join('');
+      }
+    }
+  }
+
+  /* ── Bootstrap ─────────────────────────────────────────────── */
+  const { ctx, W, H } = setupCanvas('canvas');
+  const steps = buildSteps();
+  const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

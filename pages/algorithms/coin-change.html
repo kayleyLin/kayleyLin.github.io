@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Coin Change · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Coin Change</span>
+    <span class="algo-category">Dynamic Programming</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Making exact change at a register, what's the fewest coins to reach this total?</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">dp = [∞] * (amount+1);  dp[0] = 0</span>
+          <span class="code-line">for i in range(1, amount+1):</span>
+          <span class="code-line">  for coin in coins:</span>
+          <span class="code-line">    if i &gt;= coin:</span>
+          <span class="code-line">      dp[i] = min(dp[i], dp[i-coin] + 1)</span>
+          <span class="code-line">// dp[amount] = minimum coins needed</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(amount × |coins|)</strong>, for each of the amount+1 values, tries every coin denomination</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(amount)</strong>, a single 1D array from 0 to target amount</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Build solutions bottom-up: dp[i] = minimum coins for amount i. Each value reuses previously computed smaller values, no work is repeated.</li>
+          <li class="insight insight-when"><strong>When to use</strong>A template for "minimum steps to reach a goal" problems. Generalises to word break, jump game, stair climbing, any problem where you pick from a set of fixed-size steps.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Greedy fails here. With coins [1, 3, 4] and amount 6: greedy picks 4+1+1 = 3 coins. DP finds 3+3 = 2 coins. Always verify whether greedy gives the global optimum before skipping DP.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    /* ── Problem data ── */
+    const COINS  = [1, 3, 4, 5];
+    const AMOUNT = 7;
+    const INF    = 999;
+
+    /* dp[i] = min coins to make amount i */
+    const dp      = new Array(AMOUNT + 1).fill(INF);
+    dp[0] = 0;
+    /* prev[i] = which coin was used at step i (for traceback) */
+    const prev = new Array(AMOUNT + 1).fill(-1);
+
+    /* ── Build steps ── */
+    function buildSteps() {
+      const steps = [];
+      function snapDp() { return dp.slice(); }
+
+      steps.push({
+        desc: `Initialise: dp[0]=0, dp[1..${AMOUNT}]=∞. Coins available: [${COINS.join(', ')}].`,
+        lines: [0],
+        dpSnap: snapDp(),
+        activeIdx: -1,
+        coinIdx: -1,
+        srcIdx: -1,
+        improved: false,
+        traceBack: null,
+        done: false,
+      });
+
+      for (let i = 1; i <= AMOUNT; i++) {
+        // announce we're computing dp[i]
+        steps.push({
+          desc: `Computing dp[${i}]: try each coin to see which gives fewer total coins.`,
+          lines: [1, 2],
+          dpSnap: snapDp(),
+          activeIdx: i,
+          coinIdx: -1,
+          srcIdx: -1,
+          improved: false,
+          traceBack: null,
+          done: false,
+        });
+
+        let bestCoin = -1;
+        for (let ci = 0; ci < COINS.length; ci++) {
+          const coin = COINS[ci];
+          if (i >= coin) {
+            const candidate = dp[i - coin] + 1;
+            const improved  = candidate < dp[i];
+            if (improved) {
+              dp[i]   = candidate;
+              prev[i] = coin;
+              bestCoin = coin;
+            }
+            steps.push({
+              desc: `  Coin=${coin}: dp[${i}-${coin}]+1 = dp[${i-coin}]+1 = ${dp[i-coin] === INF ? '∞' : dp[i-coin]}+1 = ${candidate === INF+1 ? '∞' : candidate}. Current dp[${i}]=${dp[i] === INF ? '∞' : dp[i]}. ${improved ? 'Improved.' : 'No improvement.'}`,
+              lines: [2, 3, 4],
+              dpSnap: snapDp(),
+              activeIdx: i,
+              coinIdx: ci,
+              srcIdx: i - coin,
+              improved,
+              traceBack: null,
+              done: false,
+            });
+          } else {
+            steps.push({
+              desc: `  Coin=${coin}: ${i} < ${coin}, skip (can't use this coin here).`,
+              lines: [2, 3],
+              dpSnap: snapDp(),
+              activeIdx: i,
+              coinIdx: ci,
+              srcIdx: -1,
+              improved: false,
+              skipped: true,
+              traceBack: null,
+              done: false,
+            });
+          }
+        }
+
+        steps.push({
+          desc: `dp[${i}] = ${dp[i] === INF ? '∞ (impossible)' : dp[i]}${bestCoin > -1 ? ` (using coin ${bestCoin})` : ''}.`,
+          lines: [4],
+          dpSnap: snapDp(),
+          activeIdx: i,
+          coinIdx: -1,
+          srcIdx: -1,
+          improved: false,
+          settled: true,
+          traceBack: null,
+          done: false,
+        });
+      }
+
+      /* ── Traceback ── */
+      steps.push({
+        desc: `Table complete! dp[${AMOUNT}] = ${dp[AMOUNT]}. Tracing back which coins were used…`,
+        lines: [5],
+        dpSnap: snapDp(),
+        activeIdx: AMOUNT,
+        coinIdx: -1,
+        srcIdx: -1,
+        improved: false,
+        traceBack: [],
+        done: false,
+      });
+
+      const traceCoins = [];
+      let cur = AMOUNT;
+      const tracePath = [];
+      while (cur > 0 && prev[cur] !== -1) {
+        const coin = prev[cur];
+        traceCoins.push(coin);
+        tracePath.push(cur);
+        steps.push({
+          desc: `Used coin=${coin}: came from dp[${cur-coin}]=${dp[cur-coin]}. Move to amount ${cur-coin}.`,
+          lines: [5],
+          dpSnap: snapDp(),
+          activeIdx: cur,
+          srcIdx: cur - coin,
+          coinIdx: -1,
+          improved: false,
+          traceBack: tracePath.slice(),
+          done: false,
+        });
+        cur -= coin;
+      }
+
+      const coinsUsed = traceCoins.slice().reverse().join(' + ');
+      steps.push({
+        desc: `Done! Minimum coins = ${dp[AMOUNT]}. Coins used: ${coinsUsed} = ${AMOUNT}.`,
+        lines: [5],
+        dpSnap: snapDp(),
+        activeIdx: -1,
+        coinIdx: -1,
+        srcIdx: -1,
+        improved: false,
+        traceBack: tracePath.slice(),
+        done: true,
+        coinsUsed: traceCoins.slice().reverse(),
+      });
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw ── */
+    function draw(ctx, step, W, H) {
+      if (!step) return;
+
+      const dpSnap    = step.dpSnap || new Array(AMOUNT + 1).fill(INF);
+      const activeIdx = step.activeIdx;
+      const srcIdx    = step.srcIdx;
+      const traceBack = step.traceBack;   // array of amount indices in traceback path
+
+      /* Layout for 1-D array */
+      const CELLS    = AMOUNT + 1;        // 0..7
+      const CELL_W   = Math.min(70, Math.floor((W - 80) / CELLS));
+      const CELL_H   = CELL_W;            // square cells
+      const ARRAY_W  = CELL_W * CELLS;
+      const COIN_AREA_H = 90;             // top area for coins
+      const startX   = (W - ARRAY_W) / 2;
+      const startY   = COIN_AREA_H + 20 + (H - COIN_AREA_H - 20 - CELL_H - 60) / 2;
+
+      function cellRect(i) {
+        return { x: startX + i * CELL_W, y: startY, w: CELL_W, h: CELL_H };
+      }
+
+      /* ── Coin circles at top ── */
+      const coinR    = 20;
+      const coinGap  = coinR * 2 + 18;
+      const coinTotalW = COINS.length * coinGap - 18;
+      const coinStartX = (W - coinTotalW) / 2 + coinR;
+      const coinY    = COIN_AREA_H / 2 - 4;
+
+      ctx.save();
+      ctx.font = '11px "Newsreader", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(28,26,22,0.42)';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Coins:', coinStartX - coinGap * 0.5 - coinR - 4, coinY);
+      ctx.restore();
+
+      COINS.forEach((coin, ci) => {
+        const cx = coinStartX + ci * coinGap;
+        const isCurrentCoin = step.coinIdx === ci && !step.skipped;
+        const isSkipped     = step.coinIdx === ci && step.skipped;
+
+        // shadow glow for active coin
+        if (isCurrentCoin) {
+          ctx.save();
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = step.improved ? C.green : C.yellow;
+          ctx.restore();
+        }
+
+        // circle
+        ctx.beginPath();
+        ctx.arc(cx, coinY, coinR, 0, Math.PI * 2);
+        if (isCurrentCoin) {
+          ctx.fillStyle = step.improved ? 'rgba(75,107,78,0.25)' : 'rgba(151,113,26,0.20)';
+        } else if (isSkipped) {
+          ctx.fillStyle = 'rgba(28,26,22,0.06)';
+        } else {
+          ctx.fillStyle = 'rgba(28,26,22,0.11)';
+        }
+        ctx.fill();
+
+        ctx.strokeStyle = isCurrentCoin
+          ? (step.improved ? C.green : C.yellow)
+          : (isSkipped ? 'rgba(28,26,22,0.14)' : 'rgba(28,26,22,0.24)');
+        ctx.lineWidth = isCurrentCoin ? 2 : 1.5;
+        ctx.stroke();
+
+        centreText(ctx, `¢${coin}`, cx, coinY, {
+          font: `bold 13px "Newsreader", Georgia, serif`,
+          color: isCurrentCoin
+            ? (step.improved ? C.green : C.yellow)
+            : (isSkipped ? 'rgba(28,26,22,0.3)' : 'rgba(28,26,22,0.7)'),
+        });
+      });
+
+      /* ── Amount index labels above cells ── */
+      for (let i = 0; i <= AMOUNT; i++) {
+        const r = cellRect(i);
+        centreText(ctx, `${i}`, r.x + r.w / 2, startY - 16, {
+          font: '11px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.4)',
+        });
+      }
+      centreText(ctx, 'amt→', startX - 28, startY - 16, {
+        font: '9px "Newsreader", Georgia, serif',
+        color: 'rgba(28,26,22,0.38)',
+      });
+
+      /* ── Cells ── */
+      for (let i = 0; i <= AMOUNT; i++) {
+        const r = cellRect(i);
+        const val = dpSnap[i];
+        const isActive = activeIdx === i;
+        const isSrc    = srcIdx === i;
+        const inTrace  = traceBack && traceBack.includes(i);
+        const isDone   = step.done && i === AMOUNT;
+        const isSrcTrace = traceBack && step.srcIdx === i;
+
+        let fill   = 'rgba(28,26,22,0.06)';
+        let stroke = 'rgba(28,26,22,0.14)';
+        let sw     = 1;
+        let tc     = 'rgba(28,26,22,0.38)';
+
+        if (isDone) {
+          fill   = 'rgba(75,107,78,0.18)';
+          stroke = C.green;
+          sw     = 2.5;
+          tc     = C.green;
+        } else if (inTrace) {
+          fill   = 'rgba(192,112,58,0.18)';
+          stroke = C.orange;
+          sw     = 2;
+          tc     = C.orange;
+        } else if (isActive && step.improved) {
+          fill   = 'rgba(192,112,58,0.20)';
+          stroke = C.orange;
+          sw     = 2.5;
+          tc     = C.orange;
+        } else if (isActive) {
+          fill   = 'rgba(151,113,26,0.14)';
+          stroke = C.yellow;
+          sw     = 2.5;
+          tc     = C.yellow;
+        } else if (isSrc) {
+          fill   = 'rgba(84,98,107,0.14)';
+          stroke = C.blue;
+          sw     = 2;
+          tc     = C.blue;
+        } else if (val !== INF) {
+          fill   = 'rgba(28,26,22,0.11)';
+          stroke = 'rgba(28,26,22,0.2)';
+          tc     = 'rgba(28,26,22,0.7)';
+        }
+
+        ctx.fillStyle   = fill;
+        roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 6);
+        ctx.fill();
+
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth   = sw;
+        roundRect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 6);
+        ctx.stroke();
+
+        // value display
+        const display = val === INF ? '∞' : `${val}`;
+        centreText(ctx, display, r.x + r.w / 2, r.y + r.h / 2, {
+          font: `bold ${val === INF ? 16 : 18}px SF Mono, monospace`,
+          color: val === INF ? 'rgba(28,26,22,0.27)' : tc,
+        });
+
+        // "dp[i]" label below
+        centreText(ctx, `dp[${i}]`, r.x + r.w / 2, startY + CELL_H + 14, {
+          font: '9px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.3)',
+        });
+      }
+
+      /* ── Arrow from src to active ── */
+      if (srcIdx >= 0 && activeIdx >= 0 && srcIdx !== activeIdx) {
+        const rSrc = cellRect(srcIdx);
+        const rDst = cellRect(activeIdx);
+        const y1 = rSrc.y + CELL_H + 28;
+        const x1 = rSrc.x + rSrc.w / 2;
+        const x2 = rDst.x + rDst.w / 2;
+        const y2 = rDst.y + CELL_H + 28;
+        // draw a curved arrow below the cells
+        ctx.save();
+        ctx.strokeStyle = C.blue;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.bezierCurveTo(x1, y1 + 16, x2, y2 + 16, x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // arrowhead
+        ctx.fillStyle = C.blue;
+        ctx.beginPath();
+        ctx.moveTo(x2, rDst.y + CELL_H + 24);
+        ctx.lineTo(x2 - 5, rDst.y + CELL_H + 34);
+        ctx.lineTo(x2 + 5, rDst.y + CELL_H + 34);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      /* ── Formula strip ── */
+      ctx.fillStyle = 'rgba(28,26,22,0.06)';
+      roundRect(ctx, 14, H - 30, W - 28, 22, 5);
+      ctx.fill();
+      centreText(ctx, 'dp[i] = min(dp[i],  dp[i − coin] + 1)  for coin in coins', W / 2, H - 19, {
+        font: '9.5px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.45)',
+      });
+
+      /* ── Answer badge ── */
+      if (step.done || (traceBack && traceBack.length > 0)) {
+        const ans = dpSnap[AMOUNT];
+        ctx.fillStyle = 'rgba(75,107,78,0.15)';
+        roundRect(ctx, W - 148, 10, 136, 26, 6);
+        ctx.fill();
+        ctx.strokeStyle = C.green;
+        ctx.lineWidth = 1;
+        roundRect(ctx, W - 148, 10, 136, 26, 6);
+        ctx.stroke();
+        centreText(ctx, `Min coins = ${ans === INF ? '∞' : ans}`, W - 80, 23, {
+          font: '11px "Newsreader", Georgia, serif',
+          color: C.green,
+        });
+      }
+
+      /* ── Coins used display ── */
+      if (step.coinsUsed && step.coinsUsed.length > 0) {
+        const label = step.coinsUsed.join(' + ') + ' = ' + AMOUNT;
+        const bw = Math.min(280, label.length * 9 + 24);
+        ctx.fillStyle = 'rgba(192,112,58,0.15)';
+        roundRect(ctx, (W - bw) / 2, 10, bw, 26, 6);
+        ctx.fill();
+        ctx.strokeStyle = C.orange;
+        ctx.lineWidth = 1;
+        roundRect(ctx, (W - bw) / 2, 10, bw, 26, 6);
+        ctx.stroke();
+        centreText(ctx, label, W / 2, 23, {
+          font: 'bold 11px SF Mono, monospace',
+          color: C.orange,
+        });
+      }
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

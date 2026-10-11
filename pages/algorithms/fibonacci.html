@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fibonacci · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    .mode-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+    .mode-btn {
+      font-size: 0.72rem;
+      font-family: inherit;
+      padding: 0.28rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid rgba(28,26,22,0.21);
+      background: rgba(28,26,22,0.10);
+      color: rgba(28,26,22,0.55);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .mode-btn.active {
+      background: rgba(84,98,107,0.18);
+      border-color: var(--rust);
+      color: var(--rust);
+    }
+    .legend-row {
+      display: flex;
+      gap: 0.9rem;
+      flex-wrap: wrap;
+      margin-top: 0.55rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      color: rgba(28,26,22,0.5);
+    }
+    .legend-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Fibonacci</span>
+    <span class="algo-category">Recursion &amp; D&amp;C</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Like recalculating your age every time someone asks, memoization just writes it down.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Mode</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btn-naive">Naive</button>
+          <button class="mode-btn" id="btn-memo">Memoized</button>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#97711A"></div>Computing</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4B6B4E"></div>Done</div>
+          <div class="legend-item"><div class="legend-dot" style="border:2px solid #6F6091;background:transparent"></div>Duplicate call</div>
+          <div class="legend-item"><div class="legend-dot" style="border:2px solid #5F7F8C;background:rgba(95,127,140,0.15)"></div>Memo hit</div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function fib(n):</span>
+          <span class="code-line">  if n &lt;= 1: return n</span>
+          <span class="code-line">  if memo[n] exists: return memo[n]   // memoized</span>
+          <span class="code-line">  memo[n] = fib(n-1) + fib(n-2)</span>
+          <span class="code-line">  return memo[n]</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(2ⁿ)</strong> naive → <strong>O(n)</strong> memoized. fib(40) naive ≈ 1 billion calls; memoized = 40.</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(n)</strong> for memo table; <strong>O(n)</strong> call stack depth</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Overlapping subproblems make naive recursion exponential. The same fib(3) is computed dozens of times. Caching one value changes the entire complexity class.</li>
+          <li class="insight insight-when"><strong>When to use</strong>The gateway DP problem. Master the memo pattern here and Knapsack, LCS, Coin Change all become variations on the same idea.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>The exponential blowup is invisible for small n. Try computing fib(50) without memoization; it will hang.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    /* ── Tree structure for fib(6) ──
+       Pre-build the full call tree with positions.
+       Node key = "fib(N)-path" to allow duplicates as separate nodes. */
+
+    const N_ROOT = 6;
+    const NODE_R = 22;
+
+    /* Build tree nodes with layout positions via BFS-style level assignment */
+    let nodeList = [];  // { id, n, parentId, childIndex, level, x, y, value, isDuplicate }
+    let nodeIdCounter = 0;
+
+    function buildTree(n, parentId, seenCounts) {
+      const id = nodeIdCounter++;
+      seenCounts[n] = (seenCounts[n] || 0) + 1;
+      const isDuplicate = seenCounts[n] > 1;
+      const node = { id, n, parentId, children: [], isDuplicate, level: 0 };
+      nodeList.push(node);
+      if (n > 1) {
+        const leftChild  = buildTree(n - 1, id, seenCounts);
+        const rightChild = buildTree(n - 2, id, seenCounts);
+        node.children = [leftChild.id, rightChild.id];
+        leftChild.parentId  = id;
+        rightChild.parentId = id;
+      }
+      return node;
+    }
+
+    nodeList = [];
+    nodeIdCounter = 0;
+    buildTree(N_ROOT, null, {});
+
+    /* Assign levels */
+    function assignLevels(nodeId, level) {
+      nodeList[nodeId].level = level;
+      nodeList[nodeId].children.forEach(c => assignLevels(c, level + 1));
+    }
+    assignLevels(0, 0);
+
+    const maxLevel = Math.max(...nodeList.map(n => n.level));
+
+    /* Assign x positions using a simple in-order traversal that gives
+       each leaf its own slot, then parents centre over children. */
+    let leafCounter = 0;
+    function assignX(nodeId) {
+      const node = nodeList[nodeId];
+      if (node.children.length === 0) {
+        node.leafIdx = leafCounter++;
+      } else {
+        node.children.forEach(c => assignX(c));
+        const leftX  = nodeList[node.children[0]].leafIdx;
+        const rightX = nodeList[node.children[1]].leafIdx;
+        node.leafIdx = (leftX + rightX) / 2;
+      }
+    }
+    leafCounter = 0;
+    assignX(0);
+
+    const totalLeaves = leafCounter;
+
+    /* Canvas positions will be computed in draw() based on W, H */
+
+    /* ── Build naive steps (DFS pre-order: enter node, recurse left, recurse right) ── */
+    function buildNaiveSteps() {
+      const steps = [];
+      // active = set of node ids currently "on the call stack"
+      // done   = set of node ids fully computed
+      // We walk the tree DFS and emit a step for each node activation & completion
+
+      function dfs(nodeId, active, done) {
+        const node = nodeList[nodeId];
+        // Step: entering this node (yellow)
+        const activeNew = new Set(active); activeNew.add(nodeId);
+        steps.push({
+          active: new Set(activeNew),
+          done:   new Set(done),
+          highlighted: nodeId,
+          lines: node.n <= 1 ? [0, 1] : [0, 3],
+          desc: node.isDuplicate
+            ? `Naive: calling fib(${node.n}) again, duplicate work! (already computed elsewhere)`
+            : `Calling fib(${node.n})${node.n <= 1 ? ` → base case, returns ${node.n}` : '…'}`,
+          mode: 'naive'
+        });
+
+        if (node.n > 1) {
+          dfs(node.children[0], activeNew, done);
+          dfs(node.children[1], activeNew, new Set(done));
+        }
+
+        // Step: node computed (green)
+        const doneNew = new Set(done); doneNew.add(nodeId);
+        const activeAfter = new Set(active);
+        steps.push({
+          active: new Set(activeAfter),
+          done:   new Set(doneNew),
+          highlighted: nodeId,
+          lines: node.n <= 1 ? [1] : [3, 4],
+          desc: `fib(${node.n}) = ${fibonacci(node.n)}`,
+          mode: 'naive'
+        });
+      }
+
+      steps.push({
+        active: new Set(), done: new Set(), highlighted: -1,
+        lines: [0], desc: 'Naive recursion: every fib(n) is computed from scratch. Watch for duplicate nodes!', mode: 'naive'
+      });
+      dfs(0, new Set(), new Set());
+      return steps;
+    }
+
+    /* ── Build memoized steps ── */
+    function buildMemoSteps() {
+      const steps = [];
+      const memo = {};
+
+      function dfs(nodeId, active, done, memoHits) {
+        const node = nodeList[nodeId];
+        // Only process the "canonical" first occurrence of each n value
+        // Others are memo hits
+        if (memo[node.n] !== undefined) {
+          // memo hit
+          const memoHitsNew = new Set(memoHits); memoHitsNew.add(nodeId);
+          steps.push({
+            active: new Set(active), done: new Set(done),
+            memoHits: new Set(memoHitsNew),
+            highlighted: nodeId,
+            lines: [2],
+            desc: `memo[${node.n}] already exists = ${fibonacci(node.n)} → skip subtree, return immediately!`,
+            mode: 'memo'
+          });
+          return;
+        }
+
+        const activeNew = new Set(active); activeNew.add(nodeId);
+        steps.push({
+          active: new Set(activeNew), done: new Set(done),
+          memoHits: new Set(memoHits),
+          highlighted: nodeId,
+          lines: node.n <= 1 ? [0, 1] : [0, 3],
+          desc: node.n <= 1
+            ? `fib(${node.n}) → base case, returns ${node.n}`
+            : `Calling fib(${node.n}), not in memo yet, computing…`,
+          mode: 'memo'
+        });
+
+        if (node.n > 1) {
+          dfs(node.children[0], activeNew, done, memoHits);
+          dfs(node.children[1], activeNew, done, memoHits);
+        }
+
+        memo[node.n] = fibonacci(node.n);
+        const doneNew = new Set(done); doneNew.add(nodeId);
+        const activeAfter = new Set(active);
+        steps.push({
+          active: new Set(activeAfter), done: new Set(doneNew),
+          memoHits: new Set(memoHits),
+          highlighted: nodeId,
+          lines: [3, 4],
+          desc: `fib(${node.n}) = ${fibonacci(node.n)}, stored in memo[${node.n}]`,
+          mode: 'memo'
+        });
+      }
+
+      steps.push({
+        active: new Set(), done: new Set(), memoHits: new Set(), highlighted: -1,
+        lines: [0], desc: 'Memoized: each fib(n) computed only once. Memo hits skip entire subtrees!', mode: 'memo'
+      });
+      dfs(0, new Set(), new Set(), new Set());
+      return steps;
+    }
+
+    function fibonacci(n) {
+      if (n <= 1) return n;
+      let a = 0, b = 1;
+      for (let i = 2; i <= n; i++) { const t = a + b; a = b; b = t; }
+      return b;
+    }
+
+    const naiveSteps = buildNaiveSteps();
+    const memoSteps  = buildMemoSteps();
+
+    let currentMode = 'naive';
+    let steps = naiveSteps;
+
+    /* ── Draw ── */
+    function getNodePos(node, W, H) {
+      const marginX = NODE_R + 8;
+      const usableW = W - marginX * 2;
+      const marginTop = 36;
+      const usableH = H - marginTop - 20;
+      const levelH = usableH / (maxLevel + 0.5);
+      const x = marginX + (node.leafIdx / (totalLeaves - 1)) * usableW;
+      const y = marginTop + node.level * levelH + NODE_R;
+      return { x, y };
+    }
+
+    function draw(ctx, step, W, H) {
+      if (!step) return;
+
+      const active    = step.active    || new Set();
+      const done      = step.done      || new Set();
+      const memoHits  = step.memoHits  || new Set();
+      const highlighted = step.highlighted;
+      const mode = step.mode || 'naive';
+
+      /* Draw edges first */
+      nodeList.forEach(node => {
+        const p = getNodePos(node, W, H);
+        node.children.forEach(cid => {
+          const c = nodeList[cid];
+          const cp = getNodePos(c, W, H);
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y + NODE_R);
+          ctx.lineTo(cp.x, cp.y - NODE_R);
+          ctx.strokeStyle = 'rgba(28,26,22,0.14)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+      });
+
+      /* Draw nodes */
+      nodeList.forEach(node => {
+        const { x, y } = getNodePos(node, W, H);
+        const isActive    = active.has(node.id);
+        const isDone      = done.has(node.id);
+        const isMemoHit   = memoHits.has(node.id);
+        const isHighlight = node.id === highlighted;
+
+        ctx.save();
+
+        if (isMemoHit) {
+          /* Memo hit: teal dashed circle */
+          ctx.beginPath();
+          ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(95,127,140,0.13)';
+          ctx.fill();
+          ctx.setLineDash([4, 3]);
+          ctx.strokeStyle = C.teal;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        } else if (isDone) {
+          /* Done: green */
+          ctx.beginPath();
+          ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+          const g = ctx.createRadialGradient(x, y - 6, 2, x, y, NODE_R);
+          g.addColorStop(0, '#6E9166');
+          g.addColorStop(1, '#33603C');
+          ctx.fillStyle = g;
+          ctx.fill();
+          if (isHighlight) {
+            ctx.strokeStyle = '#1C1A16';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        } else if (isActive) {
+          /* Active/computing: yellow */
+          ctx.beginPath();
+          ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+          const g = ctx.createRadialGradient(x, y - 6, 2, x, y, NODE_R);
+          g.addColorStop(0, '#B08828');
+          g.addColorStop(1, '#7E5E14');
+          ctx.fillStyle = g;
+          ctx.fill();
+          if (isHighlight) {
+            ctx.strokeStyle = '#1C1A16';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+          }
+        } else if (mode === 'naive' && node.isDuplicate) {
+          /* Duplicate (not yet called in this step): purple dashed */
+          ctx.beginPath();
+          ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(111,96,145,0.1)';
+          ctx.fill();
+          ctx.setLineDash([4, 3]);
+          ctx.strokeStyle = C.purple;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        } else {
+          /* Not yet touched: dim */
+          ctx.beginPath();
+          ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(28,26,22,0.06)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(28,26,22,0.22)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        /* Node label */
+        const labelColor = (isDone || isActive)
+          ? 'rgba(243,239,230,0.95)'
+          : (isMemoHit ? C.teal : (node.isDuplicate && mode === 'naive' ? C.purple : 'rgba(28,26,22,0.4)'));
+
+        centreText(ctx, `fib(${node.n})`, x, y, {
+          font: `${node.n >= 5 ? 9 : 10}px SF Mono, monospace`,
+          color: labelColor
+        });
+
+        /* Show value if done or memo hit */
+        if (isDone || isMemoHit) {
+          centreText(ctx, `=${fibonacci(node.n)}`, x, y + NODE_R + 11, {
+            font: '9px SF Mono, monospace',
+            color: isDone ? C.green : C.teal
+          });
+        }
+
+        ctx.restore();
+      });
+
+      /* Mode label badge */
+      const badgeLabel = mode === 'naive' ? 'Naive Recursion' : 'With Memoization';
+      const badgeColor = mode === 'naive' ? 'rgba(192,112,58,0.2)' : 'rgba(84,98,107,0.2)';
+      const badgeStroke = mode === 'naive' ? C.orange : C.blue;
+      ctx.fillStyle = badgeColor;
+      roundRect(ctx, 12, 12, 148, 26, 6); ctx.fill();
+      ctx.strokeStyle = badgeStroke; ctx.lineWidth = 1; ctx.stroke();
+      centreText(ctx, badgeLabel, 86, 25, { font: '11px "Newsreader", Georgia, serif', color: badgeStroke });
+
+      /* Call count badge */
+      const totalCalls = step.mode === 'naive'
+        ? (active.size + done.size)
+        : (active.size + done.size + memoHits.size);
+      const savings = memoHits.size;
+      if (mode === 'memo' && savings > 0) {
+        ctx.fillStyle = 'rgba(75,107,78,0.15)';
+        roundRect(ctx, W - 160, 12, 148, 26, 6); ctx.fill();
+        ctx.strokeStyle = C.green; ctx.lineWidth = 1; ctx.stroke();
+        centreText(ctx, `${savings} subtree${savings > 1 ? 's' : ''} skipped`, W - 86, 25, {
+          font: '11px "Newsreader", Georgia, serif', color: C.green
+        });
+      }
+    }
+
+    /* ── Controller + mode switching ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    let ctrl = new AlgoController({ ctx, W, H, steps: naiveSteps, draw });
+
+    function switchMode(mode) {
+      currentMode = mode;
+      ctrl.pause();
+      steps = mode === 'naive' ? naiveSteps : memoSteps;
+      /* Rebuild controller with new steps by monkey-patching */
+      ctrl.steps = steps;
+      ctrl.idx = 0;
+      ctrl.render();
+
+      document.getElementById('btn-naive').classList.toggle('active', mode === 'naive');
+      document.getElementById('btn-memo').classList.toggle('active', mode === 'memo');
+    }
+
+    document.getElementById('btn-naive').addEventListener('click', () => switchMode('naive'));
+    document.getElementById('btn-memo').addEventListener('click', () => switchMode('memo'));
+  </script>
+</body>
+</html>

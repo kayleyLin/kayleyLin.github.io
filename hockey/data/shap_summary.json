@@ -1,0 +1,1 @@
+{"features":["Shot Distance (ft)","Shot Angle (\u00b0)","Normalized X Position","Shot Type","Period","Is Rebound","Home Team","Lateral Distance (|y|)"],"mean_abs_shap":[0.53601,0.07198,0.11725,0.22935,0.03506,0.11691,0.01408,0.3816]}

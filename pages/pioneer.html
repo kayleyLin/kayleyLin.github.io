@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pioneer · Kayley Lin Working Notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=95b6d20b" />
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Kayley Lin <small>Working Notebook</small></div>
+    <nav id="main-nav">
+      <a href="ee.html">Extended Essay</a>
+      <a href="pioneer.html">Pioneer</a>
+      <a href="floorball.html">Floorball</a>
+      <a href="nhl.html">NHL</a>
+      <a href="stepping-stones.html">Stepping-Stones</a>
+      <a href="about.html">About</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <span class="bar-line"></span><span class="bar-line"></span><span class="bar-line"></span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <a class="back-link" href="../index.html">← back to notebook</a>
+
+<section class="detail-hero">
+    <p class="level">Project <b>04</b> of 06</p>
+    <p class="mono eyebrow">Pioneer Research · LLM output stability · 2025 to 2026</p>
+    <h1>Which prompt change actually moved the model</h1>
+    <p class="detail-lead">
+      Ask a language model the same question twice and the answers differ. So when a
+      rewritten prompt produces a different answer, most of that difference is the sampler
+      rather than the rewrite. This separates the two.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <section class="three-part">
+
+    <div class="three-part-section">
+      <h2>Design</h2>
+      <p>
+        Five families of meaning-preserving prompt change, applied to the same 200 items
+        across four task types, five generations per item and condition. Distances are
+        measured in sentence-embedding space, within prompt and across prompts, which gives
+        both where the answers sit and how far they scatter.
+      </p>
+      <div class="media-block">
+        <span class="fig-label">Fig. 1 · Study design, from prompt conditions to inference</span>
+        <img src="../public/assets/pioneer-study-design.png" alt="Four-stage study design: prompt conditions (original plus five perturbation families), repeated outputs (five generations per item-condition), semantic geometry (within-prompt and cross-prompt distances giving location and dispersion), and inference (paired item bootstrap plus a centered two-stage generation-sensitivity analysis)." />
+      </div>
+      <table class="dtable">
+        <thead><tr><th>Dimension</th><th class="n">Setting</th></tr></thead>
+        <tbody>
+          <tr><td>Perturbation families</td><td class="n">5</td></tr>
+          <tr><td>Items per condition</td><td class="n">200</td></tr>
+          <tr><td>Task types</td><td class="n">4</td></tr>
+          <tr><td>Generations per item and condition</td><td class="n">5</td></tr>
+          <tr><td>Models</td><td class="n">GPT-4o-mini · qwen-plus · Llama-3-8B</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="three-part-section">
+      <h2>What the usual correction was mixing together</h2>
+      <p>
+        The standard way to account for sampling noise subtracts a single baseline. That
+        baseline silently combines two different things: how far the centre of the answers
+        moved, and how much wider or narrower they scattered. Those are separate effects
+        and they do not move together.
+      </p>
+      <div class="media-block media-block--wide">
+        <span class="fig-label">Fig. 2 · Sensitivity Anatomy, what the old correction was mixing</span>
+        <img src="../public/assets/pioneer-anatomy.png" alt="Two panels. Left: two-sided location shift against original-only corrected drift, with points near but not on the diagonal. Right: dispersion shift against location shift for the five perturbation families, showing that dispersion changes in both directions and is independent of how far the centre moves." />
+      </div>
+      <p>
+        Left panel: the two corrections agree that paraphrasing is the largest effect, so
+        the ranking is not an artefact of the new formula. Right panel: dispersion moves in
+        both directions and is independent of how far the centre moved, which is the reason
+        for splitting them.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Replication, and the profile where it stops</h2>
+      <div class="media-block media-block--wide">
+        <span class="fig-label">Fig. 3 · Cross-model replication, GPT, Qwen, Llama on a common sample</span>
+        <img src="../public/assets/pioneer-replication.png" alt="Four task panels, code generation, factual QA, math reasoning, open-ended writing, each showing mean location shift for five perturbation families under GPT, Qwen and Llama. Paraphrasing leads in every panel except Qwen on code generation, which is annotated as top two unresolved." />
+      </div>
+      <p>
+        Paraphrasing leads in every task panel under every model, with one exception:
+        Qwen on code generation. Eleven of twelve profiles agree. The twelfth is not
+        explained, is not averaged away, and is annotated on the figure as unresolved.
+      </p>
+      <p>
+        A two-stage item bootstrap puts the probability that the top-ranked family is
+        genuinely first at 0.9879, which is high and is not one.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>What a cheap first pass catches</h2>
+      <div class="media-block media-block--wide">
+        <span class="fig-label">Fig. 4 · Screening budget curves, what a cheap first pass actually catches</span>
+        <img src="../public/assets/pioneer-screening.png" alt="Four task panels plotting target high-risk recall against a source-model testing budget of 10, 20 and 30 percent, for five perturbation families plus a random-recall baseline. Paraphrase is the highest curve in every panel, but its confidence intervals are wide and overlap the random baseline in code generation and math reasoning." />
+      </div>
+      <p>
+        If testing every prompt against the expensive model is not affordable, how much
+        high-risk behaviour does a cheap source model catch at 10, 20 and 30 percent of the
+        budget? The curves answer that per task and per perturbation family. They are the
+        most directly usable thing in the paper and the part I would extend first.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Two questions I could not answer</h2>
+      <ul class="notes">
+        <li>Why Qwen on code generation ranks differently from the other eleven profiles.
+            No explanation survived checking, so it is reported as an open item.</li>
+        <li>Whether the semantic-distance measure tracks what a reader would call a
+            meaningful change in the answer, or only what the embedding treats as distant.
+            This one limits every number above.</li>
+      </ul>
+      <p>
+        Both are written into the paper as failures rather than dropped from it. The second
+        is the more serious of the two.
+      </p>
+    </div>
+
+  </section>
+
+  <nav class="pager">
+    <a href="ee.html"><span class="pg-label">← Previous</span>Extended Essay</a>
+    <a class="pg-next" href="stepping-stones.html"><span class="pg-label">Next →</span>Stepping-Stones</a>
+  </nav>
+
+  <footer>
+    <span>Kayley Lin · working notebook</span>
+    <span>Fraunces &amp; JetBrains Mono</span>
+  </footer>
+
+</main>
+
+<script src="../scripts/main.js?v=32519cdf"></script>
+
+</body>
+</html>

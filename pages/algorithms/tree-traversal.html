@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tree Traversal · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    /* ── Traversal toggle buttons ── */
+    .trav-toggle-wrap {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.85rem 1.25rem 0;
+      flex-shrink: 0;
+    }
+    .trav-btn {
+      flex: 1;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 5px 0;
+      border-radius: 6px;
+      border: 1px solid rgba(28,26,22,0.16);
+      background: rgba(28,26,22,0.10);
+      color: rgba(28,26,22,0.5);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .trav-btn:hover { background: rgba(28,26,22,0.14); color: rgba(28,26,22,0.75); }
+    .trav-btn.active {
+      background: rgba(84,98,107,0.22);
+      border-color: rgba(84,98,107,0.5);
+      color: #5F7F8C;
+    }
+
+    /* ── Visited order strip ── */
+    .visited-block { margin-top: 0.75rem; }
+    .visited-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(28,26,22,0.42);
+      margin-bottom: 0.45rem;
+    }
+    .visited-cells {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 1.5rem;
+    }
+    .vis-cell {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      background: rgba(75,107,78,0.18);
+      color: #4B6B4E;
+      border: 1px solid rgba(75,107,78,0.32);
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .vis-cell.current {
+      background: rgba(151,113,26,0.22);
+      color: #97711A;
+      border-color: rgba(151,113,26,0.45);
+    }
+    .vis-empty {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      color: rgba(28,26,22,0.38);
+    }
+
+    /* ── Sorted note ── */
+    .sorted-note {
+      font-size: 0.7rem;
+      color: #4B6B4E;
+      margin-top: 0.4rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .sorted-note.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Tree Traversal</span>
+    <span class="algo-category">Trees</span>
+  </nav>
+
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+
+      <!-- Toggle buttons at top of info panel -->
+      <div class="trav-toggle-wrap">
+        <button class="trav-btn active" data-trav="pre">Pre-order</button>
+        <button class="trav-btn"        data-trav="in" >In-order</button>
+        <button class="trav-btn"        data-trav="post">Post-order</button>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Three ways to read the same book, cover first, alphabetical, or conclusion first.</p>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap" id="pseudo-wrap">
+          <!-- pre-order lines (indices 0-2) -->
+          <span class="code-line">// Pre-order: Root → Left → Right</span>
+          <span class="code-line">visit(node)</span>
+          <span class="code-line">traverse(node.left); traverse(node.right)</span>
+          <!-- in-order lines (indices 3-5) -->
+          <span class="code-line" style="margin-top:0.5rem">// In-order: Left → Root → Right</span>
+          <span class="code-line">traverse(node.left)</span>
+          <span class="code-line">visit(node); traverse(node.right)</span>
+          <!-- post-order lines (indices 6-8) -->
+          <span class="code-line" style="margin-top:0.5rem">// Post-order: Left → Right → Root</span>
+          <span class="code-line">traverse(node.left); traverse(node.right)</span>
+          <span class="code-line">visit(node)</span>
+        </div>
+        <div class="visited-block">
+          <div class="visited-label">Visited Order</div>
+          <div class="visited-cells" id="visited-display">
+            <span class="vis-empty">none yet</span>
+          </div>
+          <div class="sorted-note" id="sorted-note">In-order produces sorted output!</div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(n)</strong> for all three orders, every node visited exactly once, no revisits</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(h)</strong> recursion stack, <strong>O(log n)</strong> balanced, <strong>O(n)</strong> skewed tree</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Three orders, one rule change: where you "visit" (process) relative to recursing left and right. Pre = Root first. In = Root middle. Post = Root last.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Pre-order: copying/serialising trees. In-order: iterating a BST in sorted order. Post-order: safe deletion (children before parent), evaluating expression trees.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>In-order only produces sorted output for BST, not for arbitrary binary trees. Confusing the three orders is a classic interview mistake; remember the Root's position in the name.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1/1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Fixed tree: 7 nodes ──────────────────────────────────────
+        50
+       /  \
+      30   70
+     / \  / \
+    20  40 60 80
+  ─────────────────────────────────────────────────────────────── */
+  const TREE = {
+    val: 50,
+    left: {
+      val: 30,
+      left:  { val: 20, left: null, right: null },
+      right: { val: 40, left: null, right: null },
+    },
+    right: {
+      val: 70,
+      left:  { val: 60, left: null, right: null },
+      right: { val: 80, left: null, right: null },
+    },
+  };
+
+  const ALL_VALS = [50, 30, 70, 20, 40, 60, 80];
+
+  /* ── Layout (same rank/depth approach as BST) ──────────────── */
+  const R       = 24;    // node radius
+  const LEVEL_H = 90;   // vertical spacing between levels
+
+  function layoutTree(root) {
+    let rank = 0;
+    function inOrder(node, depth) {
+      if (!node) return;
+      inOrder(node.left, depth + 1);
+      node._rank  = rank++;
+      node._depth = depth;
+      inOrder(node.right, depth + 1);
+    }
+    inOrder(root, 0);
+  }
+
+  function positionTree(root, W, H) {
+    const n     = ALL_VALS.length;
+    const padX  = R + 20;
+    const padY  = 50;
+    const stepX = n > 1 ? (W - padX * 2) / (n - 1) : 0;
+    function assign(node) {
+      if (!node) return;
+      node.x = padX + node._rank * stepX;
+      node.y = padY + node._depth * LEVEL_H;
+      assign(node.left);
+      assign(node.right);
+    }
+    assign(root);
+  }
+
+  // Pre-compute layout once (positions are relative to rank/depth,
+  // actual px assigned in draw() each frame for the current W/H)
+  layoutTree(TREE);
+
+  /* ── Build traversal step sequences ─────────────────────────── */
+  // Each step: { currentVal, visitedSoFar: [], desc, lines, trav }
+  // 'state' of a node: 'unvisited' | 'current' | 'done'
+
+  function buildTraversalSteps(mode) {
+    const steps = [];
+    const visited = [];
+
+    // pseudocode line indices per mode:
+    // pre:  visit=1, traverse=2
+    // in:   traverse-left=4, visit=5, traverse-right=5
+    // post: traverse=7, visit=8
+    const lineMap = {
+      pre:  { visit: [1, 2], traverse: [2] },
+      in:   { visit: [5],    traverse: [4, 5] },
+      post: { visit: [8],    traverse: [7, 8] },
+    };
+
+    const orderNames = { pre: 'Pre-order', in: 'In-order', post: 'Post-order' };
+    const orderDesc  = {
+      pre:  'Root → Left → Right',
+      in:   'Left → Root → Right',
+      post: 'Left → Right → Root',
+    };
+
+    // Opening step
+    steps.push({
+      currentVal: null,
+      visitedSoFar: [],
+      desc: `${orderNames[mode]}: ${orderDesc[mode]}.`,
+      lines: mode === 'pre' ? [0,1,2] : mode === 'in' ? [3,4,5] : [6,7,8],
+      trav: mode,
+    });
+
+    function snap(val, desc, lines) {
+      steps.push({
+        currentVal: val,
+        visitedSoFar: [...visited],
+        desc,
+        lines,
+        trav: mode,
+      });
+    }
+
+    function preOrder(node) {
+      if (!node) return;
+      // Visit root
+      snap(node.val, `Visit ${node.val} (root of subtree).`, [1]);
+      visited.push(node.val);
+      snap(null, `${node.val} marked done. Traverse left subtree.`, [2]);
+      preOrder(node.left);
+      snap(null, `Back to ${node.val}. Traverse right subtree.`, [2]);
+      preOrder(node.right);
+    }
+
+    function inOrder(node) {
+      if (!node) return;
+      snap(null, `Traverse left subtree of ${node.val}.`, [4]);
+      inOrder(node.left);
+      // Visit root
+      snap(node.val, `Visit ${node.val}.`, [5]);
+      visited.push(node.val);
+      snap(null, `${node.val} done. Traverse right subtree.`, [5]);
+      inOrder(node.right);
+    }
+
+    function postOrder(node) {
+      if (!node) return;
+      snap(null, `Traverse left subtree of ${node.val}.`, [7]);
+      postOrder(node.left);
+      snap(null, `Traverse right subtree of ${node.val}.`, [7]);
+      postOrder(node.right);
+      // Visit root last
+      snap(node.val, `Both subtrees done, visit ${node.val}.`, [8]);
+      visited.push(node.val);
+    }
+
+    if (mode === 'pre')  preOrder(TREE);
+    if (mode === 'in')   inOrder(TREE);
+    if (mode === 'post') postOrder(TREE);
+
+    // Final step: all done
+    steps.push({
+      currentVal: null,
+      visitedSoFar: [...visited],
+      desc: `Traversal complete! Result: [${visited.join(', ')}]`,
+      lines: mode === 'pre' ? [0,1,2] : mode === 'in' ? [3,4,5] : [6,7,8],
+      trav: mode,
+      done: true,
+    });
+
+    return steps;
+  }
+
+  /* Pre-compute all three sets */
+  const allSteps = {
+    pre:  buildTraversalSteps('pre'),
+    in:   buildTraversalSteps('in'),
+    post: buildTraversalSteps('post'),
+  };
+
+  /* ── Draw function ───────────────────────────────────────────── */
+  function draw(ctx, step, W, H) {
+    ctx.clearRect(0, 0, W, H);
+    if (!step) return;
+
+    // Compute pixel positions for this W/H
+    positionTree(TREE, W, H);
+
+    const { currentVal, visitedSoFar } = step;
+    const visitedSet = new Set(visitedSoFar);
+
+    // Draw edges
+    function drawEdges(node) {
+      if (!node) return;
+      const children = [node.left, node.right];
+      for (const child of children) {
+        if (!child) continue;
+        const parentDone  = visitedSet.has(node.val);
+        const childActive = child.val === currentVal;
+        const childDone   = visitedSet.has(child.val);
+        let alpha = 0.2;
+        if (parentDone || childDone || childActive) alpha = 0.5;
+        ctx.save();
+        ctx.strokeStyle = `rgba(28,26,22,${alpha})`;
+        ctx.lineWidth   = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.lineTo(child.x, child.y);
+        ctx.stroke();
+        ctx.restore();
+        drawEdges(child);
+      }
+    }
+    drawEdges(TREE);
+
+    // Draw nodes
+    function drawNodes(node) {
+      if (!node) return;
+      drawNodes(node.left);
+      drawNodes(node.right);
+
+      const isCurrent = node.val === currentVal;
+      const isDone    = visitedSet.has(node.val);
+
+      let fill, textColor, glowColor = null;
+      if (isCurrent) {
+        fill = C.yellow; textColor = '#F3EFE6'; glowColor = C.yellow;
+      } else if (isDone) {
+        fill = C.green;  textColor = '#F3EFE6'; glowColor = null;
+      } else {
+        fill = 'rgba(28,26,22,0.14)'; textColor = 'rgba(28,26,22,0.42)';
+      }
+
+      // Glow
+      if (glowColor) {
+        ctx.save();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur  = 20;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, R, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, R, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = isCurrent
+        ? C.yellow
+        : isDone
+          ? 'rgba(75,107,78,0.5)'
+          : 'rgba(28,26,22,0.22)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Label
+      centreText(ctx, String(node.val), node.x, node.y, {
+        font: `bold 14px "Newsreader", Georgia, serif`,
+        color: textColor,
+      });
+
+      // Visit-order badge on done nodes (small superscript index)
+      const visitIdx = visitedSoFar.indexOf(node.val);
+      if (visitIdx >= 0) {
+        centreText(ctx, String(visitIdx + 1), node.x + R * 0.62, node.y - R * 0.62, {
+          font: `bold 9px "Newsreader", Georgia, serif`,
+          color: 'rgba(243,239,230,0.95)',
+        });
+      }
+    }
+    drawNodes(TREE);
+
+    // Update visited strip in the DOM
+    updateVisitedDisplay(step);
+  }
+
+  function updateVisitedDisplay(step) {
+    const el = document.getElementById('visited-display');
+    if (!el) return;
+    const { visitedSoFar, currentVal, done } = step;
+
+    if (visitedSoFar.length === 0 && !currentVal) {
+      el.innerHTML = '<span class="vis-empty">none yet</span>';
+    } else {
+      const cells = visitedSoFar.map(v =>
+        `<span class="vis-cell">${v}</span>`
+      );
+      if (currentVal !== null && currentVal !== undefined) {
+        cells.push(`<span class="vis-cell current">${currentVal}</span>`);
+      }
+      el.innerHTML = cells.join('');
+    }
+
+    // Show sorted note only for in-order when all done
+    const note = document.getElementById('sorted-note');
+    if (note) {
+      const isInOrder = step.trav === 'in';
+      const allDone   = done || visitedSoFar.length === ALL_VALS.length;
+      note.classList.toggle('visible', isInOrder && allDone);
+    }
+  }
+
+  /* ── Bootstrap + toggle wiring ──────────────────────────────── */
+  const { ctx, W, H } = setupCanvas('canvas');
+  let currentMode = 'pre';
+  const ctrl = new AlgoController({ ctx, W, H, steps: allSteps.pre, draw });
+
+  // Wire traversal toggle buttons
+  document.querySelectorAll('.trav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.trav;
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      // Update active class
+      document.querySelectorAll('.trav-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.trav === mode));
+
+      // Swap steps and reset
+      ctrl.steps = allSteps[mode];
+      ctrl.reset();
+
+      // Update pseudocode highlighting to match mode
+      // The AlgoController._updateUI handles .hl via step.lines on each render,
+      // but we also want the section comments to reflect correctly.
+      // No extra work needed, step.lines already encode the right indices.
+    });
+  });
+  </script>
+</body>
+</html>

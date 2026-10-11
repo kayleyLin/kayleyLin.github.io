@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Selection Sort · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Selection Sort</span>
+    <span class="algo-category">Sorting</span>
+  </nav>
+
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Like picking the shortest person from a line, moving them to the front, then repeating from whoever's left.</p>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">for i in range(n):</span>
+          <span class="code-line">  min_idx = i</span>
+          <span class="code-line">  for j in range(i+1, n):</span>
+          <span class="code-line">    if arr[j] &lt; arr[min_idx]: min_idx = j</span>
+          <span class="code-line">  swap(arr[i], arr[min_idx])</span>
+          <span class="code-line">  // position i is now sorted</span>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">Time , Best:    O(n²)  [always]</span>
+          <span class="code-line">Time , Average: O(n²)</span>
+          <span class="code-line">Time , Worst:   O(n²)</span>
+          <span class="code-line">Space,          O(1)   [in-place]</span>
+          <span class="code-line">Stable: No</span>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(n²)</strong> always, no best case improvement. Makes exactly n(n−1)/2 comparisons regardless of input.</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(1)</strong>, sorts in-place with at most <strong>n−1 swaps</strong> total</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Each pass finds the minimum of the unsorted portion and places it at the sorted boundary. Minimises total swaps, at most n−1 regardless of input.</li>
+          <li class="insight insight-when"><strong>When to use</strong>When write operations are expensive (e.g. flash memory with limited write cycles). Fewer swaps than bubble sort makes it practical in write-constrained environments.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Unlike insertion sort, it cannot detect an already-sorted array and stop early. It always completes all n(n−1)/2 comparisons.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+'use strict';
+
+/* ── Initial array ────────────────────────────────────────── */
+const INIT = [64, 25, 12, 22, 11, 90, 45, 72, 38, 55, 18, 34];
+
+/* ── Pre-compute every step ───────────────────────────────── */
+function buildSteps() {
+  const arr = INIT.slice();
+  const n   = arr.length;
+  const steps = [];
+
+  // flags per bar: 'default' | 'sorted' | 'boundary' | 'compare' | 'min' | 'swap'
+  // extra state: minIdx, scanIdx, sortedUpTo
+  function snap(arr, flags, desc, lines, extra = {}) {
+    steps.push({ arr: arr.slice(), flags: flags.slice(), desc, lines, ...extra });
+  }
+
+  const flags = Array(n).fill('default');
+
+  snap(arr, flags, `Starting Selection Sort on ${n} elements.`, [0], { minIdx: -1, scanIdx: -1 });
+
+  for (let i = 0; i < n - 1; i++) {
+    let minIdx = i;
+
+    // Start of pass
+    const f0 = flags.slice();
+    f0[i] = 'boundary';
+    snap(arr, f0,
+      `Pass ${i+1}: finding minimum in positions [${i}..${n-1}]. Current min = arr[${i}] = ${arr[i]}.`,
+      [1], { minIdx: i, scanIdx: i, sortedUpTo: i - 1 });
+
+    for (let j = i + 1; j < n; j++) {
+      const fj = Array(n).fill('default');
+      for (let k = 0; k < i; k++) fj[k] = 'sorted';
+      fj[minIdx] = 'min';
+      fj[j]      = 'compare';
+
+      const better = arr[j] < arr[minIdx];
+      snap(arr, fj,
+        `Checking arr[${j}]=${arr[j]} vs current min arr[${minIdx}]=${arr[minIdx]}, ` +
+        (better ? `${arr[j]} < ${arr[minIdx]}, new minimum!` : `no change.`),
+        [2, 3], { minIdx, scanIdx: j, sortedUpTo: i - 1 });
+
+      if (better) {
+        minIdx = j;
+        const fm = Array(n).fill('default');
+        for (let k = 0; k < i; k++) fm[k] = 'sorted';
+        fm[minIdx] = 'min';
+        snap(arr, fm,
+          `New minimum found: arr[${minIdx}] = ${arr[minIdx]}.`,
+          [3], { minIdx, scanIdx: j, sortedUpTo: i - 1 });
+      }
+    }
+
+    // Swap
+    const fs = Array(n).fill('default');
+    for (let k = 0; k < i; k++) fs[k] = 'sorted';
+    fs[i]      = 'swap';
+    fs[minIdx] = 'swap';
+    const tmp = arr[i]; arr[i] = arr[minIdx]; arr[minIdx] = tmp;
+
+    snap(arr, fs,
+      minIdx === i
+        ? `arr[${i}]=${arr[i]} is already the minimum, no swap needed.`
+        : `Swapping arr[${i}] ↔ arr[${minIdx}]. Minimum ${arr[i]} moves to position ${i}.`,
+      [4], { minIdx: i, scanIdx: minIdx, sortedUpTo: i - 1 });
+
+    // Mark sorted
+    const fg = Array(n).fill('default');
+    for (let k = 0; k <= i; k++) fg[k] = 'sorted';
+    snap(arr, fg,
+      `Position ${i} locked in: ${arr[i]} is sorted. ${i+1} element${i+1>1?'s':''} sorted so far.`,
+      [5], { minIdx: -1, scanIdx: -1, sortedUpTo: i });
+  }
+
+  // Last element auto-sorted
+  const fall = Array(n).fill('sorted');
+  snap(arr, fall, `Sorted! All ${n} elements are in order.`, [], { minIdx: -1, scanIdx: -1, sortedUpTo: n - 1 });
+
+  // Patch step numbers
+  const T = steps.length;
+  steps.forEach((s, idx) => {
+    s.desc = `Step ${idx+1} of ${T}: ${s.desc}`;
+  });
+
+  return steps;
+}
+
+/* ── Canvas drawing ───────────────────────────────────────── */
+function draw(ctx, step, W, H) {
+  const { arr, flags, minIdx, scanIdx } = step;
+  const n = arr.length;
+
+  const PAD_X  = 28;
+  const PAD_TOP = 48;
+  const PAD_BOT = 40;
+  const BASE_Y  = H - PAD_BOT;
+  const usableW = W - PAD_X * 2;
+  const usableH = H - PAD_TOP - PAD_BOT;
+  const barW    = usableW / n;
+  const gap     = Math.max(2, barW * 0.1);
+  const bw      = barW - gap;
+  const MAX_VAL = Math.max(...arr);
+  const scale   = usableH * 0.85 / MAX_VAL;
+
+  // Baseline
+  ctx.save();
+  ctx.strokeStyle = 'rgba(28,26,22,0.22)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD_X, BASE_Y);
+  ctx.lineTo(W - PAD_X, BASE_Y);
+  ctx.stroke();
+  ctx.restore();
+
+  // Legend
+  ctx.save();
+  ctx.font = '11px "SF Mono", Menlo, monospace';
+  ctx.fillStyle = 'rgba(28,26,22,0.45)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Selection Sort', PAD_X, 10);
+  ctx.restore();
+
+  // Mini legend, top right
+  const legend = [
+    { color: C.purple, label: 'min' },
+    { color: C.yellow, label: 'scan' },
+    { color: C.orange, label: 'swap' },
+    { color: C.green,  label: 'sorted' },
+  ];
+  legend.forEach((item, li) => {
+    const lx = W - PAD_X - (legend.length - li) * 70;
+    ctx.save();
+    ctx.fillStyle = item.color;
+    roundRect(ctx, lx, 10, 10, 10, 3);
+    ctx.fill();
+    ctx.font = '10px "SF Mono", Menlo, monospace';
+    ctx.fillStyle = 'rgba(28,26,22,0.5)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.label, lx + 14, 15);
+    ctx.restore();
+  });
+
+  // Bars
+  for (let i = 0; i < n; i++) {
+    const x  = PAD_X + i * barW + gap / 2;
+    const bh = arr[i] * scale;
+    const y  = BASE_Y - bh;
+    const r  = Math.min(5, bw / 3);
+
+    let barColor, numColor;
+    switch (flags[i]) {
+      case 'sorted':   barColor = C.green;  numColor = C.green;  break;
+      case 'min':      barColor = C.purple; numColor = C.purple; break;
+      case 'compare':  barColor = C.yellow; numColor = C.yellow; break;
+      case 'swap':     barColor = C.orange; numColor = C.orange; break;
+      case 'boundary': barColor = 'rgba(84,98,107,0.5)'; numColor = C.blue; break;
+      default:         barColor = 'rgba(28,26,22,0.27)'; numColor = C.dim;
+    }
+
+    const active = flags[i] !== 'default' && flags[i] !== 'sorted';
+    if (active) {
+      ctx.save();
+      ctx.shadowColor = barColor;
+      ctx.shadowBlur  = 14;
+      roundRect(ctx, x, y, bw, bh, r);
+      ctx.fillStyle = barColor;
+      ctx.fill();
+      ctx.restore();
+    } else {
+      roundRect(ctx, x, y, bw, bh, r);
+      ctx.fillStyle = barColor;
+      ctx.fill();
+    }
+
+    // Value above bar
+    ctx.save();
+    ctx.font = `bold ${Math.min(12, bw * 0.55)}px "SF Mono", Menlo, monospace`;
+    ctx.fillStyle = numColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(arr[i]), x + bw / 2, y - 14);
+    ctx.restore();
+
+    // Index below baseline
+    ctx.save();
+    ctx.font = '9px "SF Mono", Menlo, monospace';
+    ctx.fillStyle = 'rgba(28,26,22,0.3)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(String(i), x + bw / 2, BASE_Y + 6);
+    ctx.restore();
+
+    // Label badge above for min / scan
+    if (flags[i] === 'min' && minIdx >= 0) {
+      const bx = x + bw / 2;
+      const by = y - 32;
+      ctx.save();
+      ctx.fillStyle = C.purple;
+      roundRect(ctx, bx - 14, by - 9, 28, 16, 4);
+      ctx.fill();
+      ctx.font = 'bold 9px "SF Mono", Menlo, monospace';
+      ctx.fillStyle = '#1C1A16';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('MIN', bx, by);
+      ctx.restore();
+    }
+  }
+
+  // Arrow connecting min to swap target (during swap)
+  if (flags[minIdx] === 'swap' && scanIdx >= 0 && minIdx !== scanIdx) {
+    const ax = PAD_X + minIdx * barW + gap / 2 + bw / 2;
+    const bx = PAD_X + scanIdx * barW + gap / 2 + bw / 2;
+    const ay = BASE_Y - arr[minIdx] * scale - 30;
+    const by_= BASE_Y - arr[scanIdx] * scale - 30;
+    const midY = Math.min(ay, by_) - 12;
+    ctx.save();
+    ctx.strokeStyle = C.orange;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay); ctx.lineTo(ax, midY);
+    ctx.lineTo(bx, midY); ctx.lineTo(bx, by_);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ── Boot ─────────────────────────────────────────────────── */
+const { ctx, W, H } = setupCanvas('canvas');
+const steps = buildSteps();
+new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

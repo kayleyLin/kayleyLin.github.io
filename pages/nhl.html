@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NHL · Kayley Lin Working Notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=95b6d20b" />
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Kayley Lin <small>Working Notebook</small></div>
+    <nav id="main-nav">
+      <a href="ee.html">Extended Essay</a>
+      <a href="pioneer.html">Pioneer</a>
+      <a href="floorball.html">Floorball</a>
+      <a href="nhl.html">NHL</a>
+      <a href="stepping-stones.html">Stepping-Stones</a>
+      <a href="about.html">About</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <span class="bar-line"></span><span class="bar-line"></span><span class="bar-line"></span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <a class="back-link" href="../index.html">← back to notebook</a>
+
+  <section class="detail-hero">
+    <p class="level">Project <b>02</b> of 06</p>
+    <p class="mono eyebrow">NHL shot modelling</p>
+    <h1>A shot model on 956,147 attempts</h1>
+    <p class="detail-lead">
+      Given where a shot was taken from and how, what is the chance it goes in. I built
+      five models to answer that and scored them on 200,820 held-out shots from the
+      2018-19 and 2019-20 seasons. They all landed within half a percentage point of each
+      other. Working out why took longer than building them.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <a class="launch" href="../hockey/index.html" target="_blank" rel="noopener">
+    <img src="../public/assets/hockey-instrument.jpg"
+         alt="The interactive model: a draggable figure where changing shot distance and angle updates the goal-probability curve." />
+    <div>
+      <h3>Open the interactive model</h3>
+      <p>
+        Eight sections, bilingual. Drag shot distance and angle and the probability curve
+        answers back. This page is the write-up; the instrument is the bench.
+      </p>
+      <span class="go">→ open in a new tab</span>
+    </div>
+  </a>
+
+  <section class="three-part">
+
+    <div class="three-part-section">
+      <h2>What the five models scored</h2>
+
+      <table class="dtable">
+        <caption>200,820 held-out shots · ECE over 10 equal-width probability bins</caption>
+        <thead>
+          <tr><th>Model</th><th class="n">ROC-AUC</th><th class="n">Brier</th><th class="n">ECE</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>XGBoost <small>tabular baseline</small></td><td class="n">0.7639</td><td class="n">0.05702</td><td class="n">0.00675</td></tr>
+          <tr><td>Deep MLP</td><td class="n">0.7667</td><td class="n">0.05688</td><td class="n">0.00552</td></tr>
+          <tr><td>LSTM <small>event context</small></td><td class="n">0.7615</td><td class="n">0.05695</td><td class="n">0.00565</td></tr>
+          <tr><td>Transformer <small>event context</small></td><td class="n">0.7639</td><td class="n">0.05681</td><td class="n">0.00495</td></tr>
+          <tr class="best"><td>Stacked ensemble</td><td class="n">0.7705</td><td class="n">0.05773</td><td class="n">0.01138</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        The spread across the four single models is 0.005 of ROC-AUC. A gradient-boosted
+        tree reading a flat feature table and a Transformer reading event sequences
+        disagree by less than I would expect between two reruns with different seeds.
+      </p>
+      <p>
+        The ensemble buys about four thousandths of AUC over the best single model and pays
+        for it in calibration: its expected calibration error is roughly twice the
+        Transformer's. If the question is how to rank shots, the ensemble wins narrowly. If
+        the question is whether a stated 8% chance really happens 8% of the time, it is the
+        worst of the five. The XGBoost baseline is deliberately trained without class
+        weighting so that it stays a clean reference point rather than a tuned competitor.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>What the model is allowed to see</h2>
+      <p>
+        Everything above sits on one set of features, built from public play-by-play
+        tables. The tables have their own problems and the write-up says so rather than
+        quietly cleaning them:
+      </p>
+      <ul class="notes">
+        <li>The raw tables carry duplicated play rows for both seasons. The feature builder
+            deduplicates on <code>play_id</code>.</li>
+        <li>The <code>strength</code> field is only reliable on goal rows, so shot-level
+            strength is reconstructed from penalty windows rather than read off directly.</li>
+        <li>The target population is unblocked attempts, meaning shots, missed shots and
+            goals, with empty-net goals excluded.</li>
+        <li>The model never observes goalkeeper position, defender locations, screens,
+            lateral passes, or any player tracking data. None of it is in the source.</li>
+      </ul>
+      <p>
+        That last line is the whole result. A player on the floor tracks the goalkeeper's
+        position, the defender's angle and whether the view is screened, continuously and
+        without effort. Not one of those is a column here. Five architectures converge on
+        the same number because the features are what is limiting them, not the
+        architecture. Another layer would not have helped.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Computing what the tables omit</h2>
+      <p>
+        If a variable is missing from the event data, one option is to stop. Another is to
+        compute it from physics instead. The second is only honest if the assumptions are
+        written down, so they are versioned in a config file that both the Python and the
+        browser read:
+      </p>
+      <div class="spec">
+        <span>m = <b>0.170 kg</b></span>
+        <span>diameter = <b>0.0762 m</b></span>
+        <span>thickness = <b>0.0254 m</b></span>
+        <span>ρ = <b>1.225 kg/m³</b></span>
+        <span>C_d = <b>0.90</b></span>
+        <span>area = <b>d × t</b></span>
+      </div>
+
+      <table class="dtable">
+        <caption>Four modules, and what each one is entitled to claim</caption>
+        <thead>
+          <tr><th>Module</th><th>Method</th><th>Scope</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ballistics</td>
+            <td>Quadratic drag, RK4 integration, cross-checked against SciPy RK45</td>
+            <td><small>Illustrative trajectories under the stated assumptions</small></td>
+          </tr>
+          <tr>
+            <td>Gyroscopic stability</td>
+            <td>Exact moments of inertia, assumed range for C<sub>mα</sub></td>
+            <td><small>Scenario analysis. 5 and 20 rev/s are illustrative, not measured</small></td>
+          </tr>
+          <tr>
+            <td>Response sensitivity</td>
+            <td>Controlled perturbations over 5,000 held-out shots</td>
+            <td><small>Sensitivity of the fitted model, not a causal physical effect</small></td>
+          </tr>
+          <tr>
+            <td>Dimensional analysis</td>
+            <td>Drag parameter β and Froude number</td>
+            <td><small>Shows drag is non-negligible here, which is why RK4 and not a parabola</small></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        The third row is the one that is easiest to misread and hardest to resist
+        misreading. Perturbing a feature and watching the prediction move tells you about
+        the function that was fitted. It does not tell you what would happen on the ice if
+        that feature actually changed. Keeping those two apart is most of the work.
+      </p>
+    </div>
+
+    <div class="three-part-section">
+      <h2>Reproducing it</h2>
+      <p>
+        Every figure on this page comes from one export script in the research repository,
+        so the page and the code cannot drift apart without someone noticing. Compact
+        artifacts are checked in, which means the unit tests and the public-contract tests
+        run without the multi-gigabyte raw dataset. There is a separate headless-browser
+        check that loads the instrument and asserts the five-row metrics table, the slider
+        interaction, the language switch and the mobile layout.
+      </p>
+      <p>
+        The research repository is private. The instrument linked at the top of this page
+        is the part that is meant to be public.
+      </p>
+    </div>
+
+  </section>
+
+  <nav class="pager">
+    <a href="floorball.html"><span class="pg-label">← Previous</span>Floorball</a>
+    <a class="pg-next" href="ee.html"><span class="pg-label">Next →</span>Extended Essay</a>
+  </nav>
+
+  <footer>
+    <span>Kayley Lin · working notebook</span>
+    <span>Fraunces &amp; JetBrains Mono</span>
+  </footer>
+
+</main>
+
+<script src="../scripts/main.js?v=32519cdf"></script>
+
+</body>
+</html>

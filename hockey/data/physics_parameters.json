@@ -1,0 +1,21 @@
+{
+  "mass_kg": 0.17,
+  "diameter_m": 0.0762,
+  "thickness_m": 0.0254,
+  "air_density_kg_m3": 1.225,
+  "gravity_ms2": 9.81,
+  "drag_coefficient_nominal": 0.9,
+  "frontal_area_model": "diameter_times_thickness",
+  "browser_dt_s": 0.001,
+  "offline_dt_s": 0.0001,
+  "shot_speeds_ms": {
+    "wrist_shot": 31.0,
+    "slap_shot": 45.0
+  },
+  "goalie_reaction_s": 0.2,
+  "cm_alpha_scenarios": [0.15, 0.3, 0.5],
+  "illustrative_spin_rev_s": {
+    "low": 5.0,
+    "high": 20.0
+  }
+}

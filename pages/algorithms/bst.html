@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BST · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    .phase-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .phase-insert { background: rgba(75,107,78,0.18); color: #4B6B4E; border: 1px solid rgba(75,107,78,0.3); }
+    .phase-search { background: rgba(84,98,107,0.18); color: #5F7F8C; border: 1px solid rgba(84,98,107,0.3); }
+    .insert-seq {
+      margin-top: 0.75rem;
+    }
+    .insert-seq-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(28,26,22,0.42);
+      margin-bottom: 0.45rem;
+    }
+    .insert-seq-cells {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .iseq-cell {
+      font-family: 'SF Mono','Menlo',monospace;
+      font-size: 0.7rem;
+      background: rgba(28,26,22,0.11);
+      color: rgba(28,26,22,0.5);
+      border: 1px solid rgba(28,26,22,0.14);
+      border-radius: 4px;
+      padding: 2px 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .iseq-cell.done { background: rgba(75,107,78,0.2); color: #4B6B4E; border-color: rgba(75,107,78,0.35); }
+    .iseq-cell.active { background: rgba(151,113,26,0.2); color: #97711A; border-color: rgba(151,113,26,0.4); }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">BST, Binary Search Tree</span>
+    <span class="algo-category">Trees</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Like a filing system where every folder decides left or right, smaller goes left, bigger goes right.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <div id="phase-badge" class="phase-badge phase-insert">Insert</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function insert(node, val):</span>
+          <span class="code-line">  if node == null: return new Node(val)</span>
+          <span class="code-line">  if val &lt; node.val:</span>
+          <span class="code-line">    node.left = insert(node.left, val)   // go left</span>
+          <span class="code-line">  else:</span>
+          <span class="code-line">    node.right = insert(node.right, val) // go right</span>
+          <span class="code-line">  return node</span>
+          <span class="code-line">function search(node, val): // similar logic</span>
+        </div>
+        <div class="insert-seq">
+          <div class="insert-seq-label">Values</div>
+          <div class="insert-seq-cells" id="seq-display"></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(h)</strong> per operation, <strong>O(log n)</strong> balanced tree, <strong>O(n)</strong> degenerate/skewed tree</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(n)</strong> for n nodes, <strong>O(h)</strong> extra for recursion stack during traversal</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Every node satisfies: all left descendants &lt; node &lt; all right descendants. This single invariant makes search O(h) and in-order traversal always produce sorted output.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Dynamic sorted sets with frequent insert/delete, database index structures (B-trees are generalisations), implementing ordered maps and priority queues.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong>Inserting already-sorted data creates a linked list, O(n) height, O(n) operations. Production code uses self-balancing variants: AVL trees or Red-Black trees maintain O(log n) height automatically.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1/1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Constants ──────────────────────────────────────────────── */
+  const INSERT_VALS  = [50, 30, 70, 20, 40, 60, 80, 10, 35, 45];
+  const SEARCH_VAL   = 35;
+  const R            = 22;   // node radius
+  const LEVEL_H      = 80;   // vertical gap between levels
+
+  /* ── BST node structure ─────────────────────────────────────── */
+  // Each node: { val, left, right, x, y, color }
+  // color strings match the C palette keys or hex
+
+  /* ── Layout: in-order rank → x position ────────────────────── */
+  // After building the tree, we assign x by in-order rank (1-indexed).
+  // The y comes from the depth (level).
+
+  function cloneNode(n) {
+    if (!n) return null;
+    return { val: n.val, left: cloneNode(n.left), right: cloneNode(n.right),
+             x: n.x, y: n.y, color: n.color };
+  }
+
+  function insertNode(root, val) {
+    if (!root) return { val, left: null, right: null, x: 0, y: 0, color: 'new' };
+    if (val < root.val) {
+      return { ...root, left: insertNode(root.left, val) };
+    } else {
+      return { ...root, right: insertNode(root.right, val) };
+    }
+  }
+
+  /* Assign (x, y) using in-order traversal rank.
+     Returns ordered list of nodes for positional reference. */
+  function layoutTree(root, depth, rankRef) {
+    if (!root) return;
+    layoutTree(root.left, depth + 1, rankRef);
+    root._rank = rankRef.val++;
+    root._depth = depth;
+    layoutTree(root.right, depth + 1, rankRef);
+  }
+
+  /* Compute pixel positions given canvas W, H */
+  function positionTree(root, nodeCount, W, H) {
+    // rank goes 0 … nodeCount-1
+    // x spread: leave R padding on each side
+    const padX = R + 16;
+    const padY = 48;
+    const usableW = W - padX * 2;
+    const step    = nodeCount > 1 ? usableW / (nodeCount - 1) : 0;
+    assignPositions(root, padX, step, padY);
+  }
+
+  function assignPositions(node, padX, step, padY) {
+    if (!node) return;
+    node.x = padX + node._rank * step;
+    node.y = padY + node._depth * LEVEL_H;
+    assignPositions(node.left,  padX, step, padY);
+    assignPositions(node.right, padX, step, padY);
+  }
+
+  /* Flatten tree into array for easy iteration */
+  function flattenTree(root, out = []) {
+    if (!root) return out;
+    out.push(root);
+    flattenTree(root.left, out);
+    flattenTree(root.right, out);
+    return out;
+  }
+
+  /* Deep-clone tree and recolor a set of highlighted nodes */
+  function coloredTree(root, colorMap) {
+    // colorMap: Map<val, colorString>
+    function walk(n) {
+      if (!n) return null;
+      return {
+        val: n.val, x: n.x, y: n.y, _rank: n._rank, _depth: n._depth,
+        color: colorMap.has(n.val) ? colorMap.get(n.val) : 'default',
+        left: walk(n.left), right: walk(n.right),
+      };
+    }
+    return walk(root);
+  }
+
+  /* ── Build all steps ─────────────────────────────────────────── */
+  function buildSteps() {
+    const steps = [];
+
+    // We maintain the "real" BST as we insert, then layout once at the end.
+    // For rendering mid-insert, we layout at each stage.
+    // Since final node count is 10, we layout with nodeCount=10 always but
+    // only draw the nodes that have been inserted so far (tracked by insertedVals set).
+
+    // --- Phase 1: Build final tree structure for fixed layout ---
+    let finalRoot = null;
+    for (const v of INSERT_VALS) finalRoot = insertNode(finalRoot, v);
+    const rankRef = { val: 0 };
+    layoutTree(finalRoot, 0, rankRef);
+    // We'll pass W/H at draw time; store relative ranks and depths.
+    // positionTree will be called inside draw().
+
+    // Snapshot helper
+    // insertedSoFar: Set of vals already in tree
+    // highlighted: Map<val, color>
+    // desc, lines, phase, activeVal (for sequence display)
+    function snap(insertedSoFar, colorMap, desc, lines, phase, activeVal) {
+      steps.push({
+        insertedSoFar: new Set(insertedSoFar),
+        colorMap: new Map(colorMap),
+        desc, lines,
+        phase: phase || 'insert',
+        activeVal: activeVal !== undefined ? activeVal : null,
+      });
+    }
+
+    // --- Phase 1: INSERT each value ---
+    const insertedSoFar = new Set();
+
+    for (let i = 0; i < INSERT_VALS.length; i++) {
+      const val = INSERT_VALS[i];
+      const colorMap = new Map();
+
+      if (i === 0) {
+        // Inserting root, no comparisons needed
+        snap(insertedSoFar, colorMap,
+          `Start: tree is empty. Insert ${val} as the root.`,
+          [0, 1], 'insert', val);
+        insertedSoFar.add(val);
+        colorMap.set(val, 'new');
+        snap(insertedSoFar, colorMap,
+          `${val} placed as the root node.`,
+          [6], 'insert', val);
+      } else {
+        // Simulate traversal for this value
+        snap(insertedSoFar, colorMap,
+          `Insert ${val}: start at root.`,
+          [0], 'insert', val);
+
+        // Walk down the already-inserted tree to find the insertion point
+        // We need to find the path in the final tree structure
+        let cur = finalRoot;
+        const path = [];
+        while (cur && insertedSoFar.has(cur.val)) {
+          path.push(cur.val);
+          if (val < cur.val) {
+            if (!cur.left || !insertedSoFar.has(cur.left.val)) break;
+            cur = cur.left;
+          } else {
+            if (!cur.right || !insertedSoFar.has(cur.right.val)) break;
+            cur = cur.right;
+          }
+        }
+
+        // Animate each comparison along the path
+        for (let p = 0; p < path.length; p++) {
+          const cmpVal = path[p];
+          colorMap.clear();
+          // Already-visited nodes on path get yellow
+          for (let q = 0; q <= p; q++) colorMap.set(path[q], 'compare');
+          const direction = val < cmpVal ? 'left  (smaller)' : 'right (larger)';
+          const cmpChar   = val < cmpVal ? '<' : '>';
+          const nextNode  = val < cmpVal
+            ? (findNode(finalRoot, cmpVal).left)
+            : (findNode(finalRoot, cmpVal).right);
+          const nextDesc  = nextNode && insertedSoFar.has(nextNode.val)
+            ? `, move to ${nextNode.val}`
+            : `, empty slot found`;
+          snap(insertedSoFar, colorMap,
+            `${val} ${cmpChar} ${cmpVal}? → go ${direction}${nextDesc}.`,
+            val < cmpVal ? [2, 3] : [4, 5], 'insert', val);
+        }
+
+        // Insert
+        insertedSoFar.add(val);
+        const cm2 = new Map(colorMap);
+        cm2.set(val, 'new');
+        snap(insertedSoFar, cm2,
+          `Insert ${val} here as a new node.`,
+          [1], 'insert', val);
+      }
+
+      // Settle: all default
+      snap(insertedSoFar, new Map(),
+        `${val} is now part of the BST.`,
+        [6], 'insert', val);
+    }
+
+    // --- Phase 2: SEARCH for SEARCH_VAL ---
+    const searchPath = [];
+    {
+      let cur = finalRoot;
+      while (cur && insertedSoFar.has(cur.val)) {
+        searchPath.push(cur.val);
+        if (cur.val === SEARCH_VAL) break;
+        cur = SEARCH_VAL < cur.val ? cur.left : cur.right;
+      }
+    }
+
+    snap(insertedSoFar, new Map(),
+      `Search phase: find ${SEARCH_VAL} in the tree.`,
+      [7], 'search', null);
+
+    for (let p = 0; p < searchPath.length; p++) {
+      const cmpVal = searchPath[p];
+      const colorMap = new Map();
+      // All visited on path so far: blue
+      for (let q = 0; q < p; q++) colorMap.set(searchPath[q], 'visited');
+      // Current: yellow
+      colorMap.set(cmpVal, 'compare');
+
+      if (cmpVal === SEARCH_VAL) {
+        colorMap.set(cmpVal, 'found');
+        snap(insertedSoFar, colorMap,
+          `Found ${SEARCH_VAL}! Search complete in ${p + 1} step${p ? 's' : ''}.`,
+          [7], 'search', null);
+      } else {
+        const direction = SEARCH_VAL < cmpVal ? 'left' : 'right';
+        snap(insertedSoFar, colorMap,
+          `Compare ${SEARCH_VAL} with ${cmpVal}: go ${direction}.`,
+          [7], 'search', null);
+      }
+    }
+
+    return steps;
+  }
+
+  /* Find a node in the final tree by value */
+  function findNode(root, val) {
+    if (!root) return null;
+    if (root.val === val) return root;
+    return findNode(root.left, val) || findNode(root.right, val);
+  }
+
+  /* ── Draw function ───────────────────────────────────────────── */
+  function draw(ctx, step, W, H) {
+    ctx.clearRect(0, 0, W, H);
+    if (!step) return;
+
+    // Rebuild final tree and position it for this canvas size
+    let finalRoot = null;
+    for (const v of INSERT_VALS) finalRoot = insertNode(finalRoot, v);
+    const rankRef = { val: 0 };
+    layoutTree(finalRoot, 0, rankRef);
+    positionTree(finalRoot, INSERT_VALS.length, W, H);
+
+    // Apply colorMap to get colored snapshot
+    const treeRoot = coloredTree(finalRoot, step.colorMap);
+
+    // Draw edges first (behind nodes)
+    drawEdges(ctx, treeRoot, step.insertedSoFar, step.colorMap);
+    // Draw nodes
+    drawNodes(ctx, treeRoot, step.insertedSoFar, step.colorMap);
+
+    // Update phase badge
+    const badge = document.getElementById('phase-badge');
+    if (badge) {
+      badge.textContent = step.phase === 'search' ? 'Search' : 'Insert';
+      badge.className   = 'phase-badge ' + (step.phase === 'search' ? 'phase-search' : 'phase-insert');
+    }
+
+    // Update sequence display
+    updateSeqDisplay(step);
+  }
+
+  function nodeColor(color) {
+    switch (color) {
+      case 'compare': return { fill: C.yellow,  text: '#F3EFE6' };
+      case 'new':     return { fill: C.green,   text: '#F3EFE6' };
+      case 'found':   return { fill: C.green,   text: '#F3EFE6' };
+      case 'visited': return { fill: C.blue,    text: '#F3EFE6' };
+      default:        return { fill: 'rgba(28,26,22,0.16)', text: '#1C1A16' };
+    }
+  }
+
+  function drawEdges(ctx, root, insertedSoFar, colorMap) {
+    if (!root) return;
+    function walkEdges(node) {
+      if (!node) return;
+      const children = [node.left, node.right];
+      for (const child of children) {
+        if (child && insertedSoFar.has(node.val) && insertedSoFar.has(child.val)) {
+          // Determine edge color based on child's state
+          const childColor = colorMap.get(child.val) || 'default';
+          let edgeAlpha = 0.3;
+          if (childColor === 'compare' || childColor === 'visited' || childColor === 'found') {
+            edgeAlpha = 0.7;
+          }
+          ctx.save();
+          ctx.strokeStyle = `rgba(28,26,22,${edgeAlpha})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(node.x, node.y);
+          ctx.lineTo(child.x, child.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+        walkEdges(child);
+      }
+    }
+    walkEdges(root);
+  }
+
+  function drawNodes(ctx, root, insertedSoFar, colorMap) {
+    function walkNodes(node) {
+      if (!node) return;
+      walkNodes(node.left);
+      walkNodes(node.right);
+
+      if (!insertedSoFar.has(node.val)) return;
+
+      const { fill, text } = nodeColor(node.color);
+
+      // Glow for active states
+      if (node.color === 'compare' || node.color === 'new' || node.color === 'found') {
+        ctx.save();
+        ctx.shadowColor = fill;
+        ctx.shadowBlur  = 18;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, R, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Node circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, R, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+
+      // Border ring
+      ctx.strokeStyle = node.color === 'default'
+        ? 'rgba(28,26,22,0.27)'
+        : fill;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Value label
+      centreText(ctx, String(node.val), node.x, node.y, {
+        font: `bold 13px "Newsreader", Georgia, serif`,
+        color: text,
+      });
+    }
+    walkNodes(root);
+  }
+
+  function updateSeqDisplay(step) {
+    const el = document.getElementById('seq-display');
+    if (!el) return;
+    el.innerHTML = INSERT_VALS.map(v => {
+      let cls = 'iseq-cell';
+      if (step.insertedSoFar.has(v)) cls += ' done';
+      if (step.activeVal === v) cls += ' active';
+      return `<span class="${cls}">${v}</span>`;
+    }).join('');
+  }
+
+  /* ── Bootstrap ───────────────────────────────────────────────── */
+  const { ctx, W, H } = setupCanvas('canvas');
+  const steps = buildSteps();
+  const ctrl  = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

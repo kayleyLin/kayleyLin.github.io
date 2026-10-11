@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Binary Search · Algorithm Animations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/algo.css">
+  <style>
+    .target-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(151,113,26,0.12);
+      border: 1px solid rgba(151,113,26,0.35);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.9rem;
+      color: #97711A;
+      margin-top: 0.5rem;
+    }
+    .target-label {
+      font-size: 0.65rem;
+      color: rgba(28,26,22,0.42);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .legend-row {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.695rem;
+      color: rgba(28,26,22,0.5);
+    }
+    .legend-box {
+      width: 13px; height: 13px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <nav class="algo-nav">
+    <a href="../teaching.html">← All Algorithms</a>
+    <span class="algo-title">Binary Search</span>
+    <span class="algo-category">Recursion &amp; D&amp;C</span>
+  </nav>
+  <div class="algo-layout">
+    <div class="algo-canvas-wrap"><canvas id="canvas"></canvas></div>
+    <div class="algo-info">
+      <div class="info-block">
+        <div class="info-label">Analogy</div>
+        <p class="analogy-text">Finding a word in a dictionary, always open to the middle, then decide which half.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Target</div>
+        <div class="target-label">Searching for</div>
+        <div class="target-badge">56</div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-box" style="background:rgba(84,98,107,0.35);border:1px solid #54626B"></div>Search range</div>
+          <div class="legend-item"><div class="legend-box" style="background:#97711A"></div>Mid</div>
+          <div class="legend-item"><div class="legend-box" style="background:rgba(28,26,22,0.12);border:1px solid rgba(28,26,22,0.14)"></div>Eliminated</div>
+          <div class="legend-item"><div class="legend-box" style="background:#4B6B4E"></div>Found!</div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Current Step</div>
+        <p id="step-desc">Press Play or Next to begin.</p>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Pseudocode</div>
+        <div class="pseudo-wrap">
+          <span class="code-line">function binarySearch(arr, target):</span>
+          <span class="code-line">  left = 0, right = arr.length - 1</span>
+          <span class="code-line">  while left &lt;= right:</span>
+          <span class="code-line">    mid = (left + right) / 2</span>
+          <span class="code-line">    if arr[mid] == target: return mid   // found</span>
+          <span class="code-line">    if arr[mid] &lt; target: left = mid+1  // search right</span>
+          <span class="code-line">    else: right = mid - 1               // search left</span>
+          <span class="code-line">  return -1  // not found</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Complexity</div>
+        <div class="kp-list">
+          <div class="kp"><span class="kp-badge kp-time">Time</span><span class="kp-text"><strong>O(log n)</strong>, 15 elements needs ≤4 comparisons; 1 billion elements needs only 30</span></div>
+          <div class="kp"><span class="kp-badge kp-space">Space</span><span class="kp-text"><strong>O(1)</strong> iterative / <strong>O(log n)</strong> recursive call stack</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-label">Key Insights</div>
+        <ul class="insight-list">
+          <li class="insight insight-core"><strong>Core idea</strong>Each comparison permanently eliminates half the remaining candidates. The search space shrinks exponentially, log₂(1,000,000,000) = 30.</li>
+          <li class="insight insight-when"><strong>When to use</strong>Any sorted structure. Also works on monotone functions, "find the first x where f(x) is true" is binary search on a function.</li>
+          <li class="insight insight-warn"><strong>Watch out</strong><code>mid = (left+right)/2</code> overflows for large indices. Always use <code>left + (right−left)/2</code> in production code.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="algo-controls">
+    <button class="ctrl-btn" id="btn-reset" title="Reset">↺</button>
+    <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+    <button class="ctrl-btn" id="btn-play">▶ Play</button>
+    <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+    <div class="ctrl-sep"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <span id="step-counter">1 / 1</span>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="speed-wrap">
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="5" value="3">
+    </div>
+  </div>
+  <script src="../../scripts/algo-base.js"></script>
+  <script>
+    'use strict';
+
+    const ARR = [2, 5, 8, 12, 16, 23, 38, 45, 56, 72, 78, 84, 91, 95, 99];
+    const TARGET = 56;
+    const N = ARR.length;
+
+    /* ── Pre-compute all search steps ── */
+    function buildSteps() {
+      const steps = [];
+
+      steps.push({
+        left: 0, right: N - 1, mid: -1,
+        state: 'init',
+        foundIdx: -1,
+        desc: `Array has ${N} elements. Target: ${TARGET}. Initialize left=0, right=${N - 1}.`,
+        lines: [0, 1]
+      });
+
+      let left = 0, right = N - 1;
+
+      steps.push({
+        left, right, mid: -1,
+        state: 'init',
+        foundIdx: -1,
+        desc: `left=${left}, right=${right}. Starting search for ${TARGET}.`,
+        lines: [1, 2]
+      });
+
+      while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+
+        steps.push({
+          left, right, mid,
+          state: 'check_mid',
+          foundIdx: -1,
+          desc: `Compute mid = ⌊(${left}+${right})/2⌋ = ${mid}. arr[${mid}] = ${ARR[mid]}.`,
+          lines: [2, 3]
+        });
+
+        if (ARR[mid] === TARGET) {
+          steps.push({
+            left, right, mid,
+            state: 'found',
+            foundIdx: mid,
+            desc: `arr[${mid}] = ${ARR[mid]} == ${TARGET}. Target found at index ${mid}!`,
+            lines: [4]
+          });
+          break;
+        } else if (ARR[mid] < TARGET) {
+          steps.push({
+            left, right, mid,
+            state: 'go_right',
+            foundIdx: -1,
+            desc: `arr[${mid}] = ${ARR[mid]} < ${TARGET}. Target is in right half. Set left = ${mid + 1}.`,
+            lines: [5]
+          });
+          left = mid + 1;
+          steps.push({
+            left, right, mid: -1,
+            state: 'update',
+            foundIdx: -1,
+            desc: `Updated: left=${left}, right=${right}. Eliminated left half (indices 0–${mid}).`,
+            lines: [2]
+          });
+        } else {
+          steps.push({
+            left, right, mid,
+            state: 'go_left',
+            foundIdx: -1,
+            desc: `arr[${mid}] = ${ARR[mid]} > ${TARGET}. Target is in left half. Set right = ${mid - 1}.`,
+            lines: [6]
+          });
+          right = mid - 1;
+          steps.push({
+            left, right, mid: -1,
+            state: 'update',
+            foundIdx: -1,
+            desc: `Updated: left=${left}, right=${right}. Eliminated right half (indices ${mid}–${N - 1}).`,
+            lines: [2]
+          });
+        }
+      }
+
+      if (ARR[steps[steps.length - 1].foundIdx] !== TARGET) {
+        steps.push({
+          left, right, mid: -1,
+          state: 'not_found',
+          foundIdx: -1,
+          desc: 'left > right, search space empty. Target not found. Return -1.',
+          lines: [7]
+        });
+      }
+
+      return steps;
+    }
+
+    const steps = buildSteps();
+
+    /* ── Draw ── */
+    function draw(ctx, step, W, H) {
+      if (!step) return;
+
+      const { left, right, mid, state, foundIdx } = step;
+
+      /* Layout calculations */
+      const boxW = Math.min(Math.floor((W - 60) / N), 54);
+      const boxH = Math.min(boxW, 50);
+      const totalW = boxW * N;
+      const startX = (W - totalW) / 2;
+      const boxY = H / 2 - boxH / 2 - 20;
+      const labelY = boxY + boxH + 28;
+      const arrowY = boxY + boxH + 52;
+      const bracketY = boxY - 28;
+
+      /* Draw boxes */
+      ARR.forEach((val, i) => {
+        const x = startX + i * boxW;
+        let fillColor, strokeColor, textColor;
+
+        if (state === 'found' && i === foundIdx) {
+          fillColor = C.green;
+          strokeColor = '#33603C';
+          textColor = 'rgba(243,239,230,0.95)';
+        } else if (i === mid && state !== 'found') {
+          fillColor = C.yellow;
+          strokeColor = '#7E5E14';
+          textColor = 'rgba(243,239,230,0.95)';
+        } else if (i >= left && i <= right) {
+          fillColor = 'rgba(84,98,107,0.22)';
+          strokeColor = 'rgba(84,98,107,0.55)';
+          textColor = '#1C1A16';
+        } else {
+          fillColor = 'rgba(28,26,22,0.06)';
+          strokeColor = 'rgba(28,26,22,0.14)';
+          textColor = 'rgba(28,26,22,0.3)';
+        }
+
+        /* Box shadow for active range */
+        if (i >= left && i <= right && state !== 'found') {
+          ctx.fillStyle = 'rgba(84,98,107,0.06)';
+          roundRect(ctx, x + 1, boxY + 2, boxW - 2, boxH + 2, 5);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = fillColor;
+        roundRect(ctx, x + 1, boxY, boxW - 2, boxH, 5);
+        ctx.fill();
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = i === mid || (state === 'found' && i === foundIdx) ? 2 : 1;
+        ctx.stroke();
+
+        /* Value */
+        centreText(ctx, String(val), x + boxW / 2, boxY + boxH / 2, {
+          font: `bold ${boxW < 40 ? 11 : 13}px "Newsreader", Georgia, serif`,
+          color: textColor
+        });
+
+        /* Index below box */
+        centreText(ctx, String(i), x + boxW / 2, boxY + boxH + 14, {
+          font: '9px SF Mono, monospace',
+          color: 'rgba(28,26,22,0.3)'
+        });
+      });
+
+      /* Active range bracket */
+      if (right >= left) {
+        const x1 = startX + left * boxW + 2;
+        const x2 = startX + (right + 1) * boxW - 2;
+        ctx.strokeStyle = 'rgba(84,98,107,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, bracketY + 12);
+        ctx.lineTo(x1, bracketY + 4);
+        ctx.lineTo(x2, bracketY + 4);
+        ctx.lineTo(x2, bracketY + 12);
+        ctx.stroke();
+        centreText(ctx, `search range`, (x1 + x2) / 2, bracketY - 4, {
+          font: '10px "Newsreader", Georgia, serif',
+          color: 'rgba(84,98,107,0.6)'
+        });
+      }
+
+      /* Pointer labels: left, mid, right */
+      const pointers = [];
+      if (left <= right) {
+        pointers.push({ idx: left, label: 'left', color: C.teal });
+        if (right !== left) pointers.push({ idx: right, label: 'right', color: C.orange });
+      }
+      if (mid >= 0 && mid <= N - 1 && state !== 'found') {
+        pointers.push({ idx: mid, label: 'mid', color: C.yellow });
+      }
+      if (state === 'found' && foundIdx >= 0) {
+        pointers.push({ idx: foundIdx, label: 'FOUND!', color: C.green });
+      }
+
+      /* Group pointers by index to avoid overlap */
+      const byIdx = {};
+      pointers.forEach(p => {
+        if (!byIdx[p.idx]) byIdx[p.idx] = [];
+        byIdx[p.idx].push(p);
+      });
+
+      Object.entries(byIdx).forEach(([idx, pts]) => {
+        const i = parseInt(idx);
+        const cx = startX + i * boxW + boxW / 2;
+        pts.forEach((p, offset) => {
+          const ay = arrowY + offset * 20;
+          /* Arrow upward */
+          arrow(ctx, cx, ay + 10, cx, boxY + boxH + 1, p.color + 'cc');
+          centreText(ctx, p.label, cx, ay + 18, {
+            font: `bold 10px "Newsreader", Georgia, serif`,
+            color: p.color
+          });
+        });
+      });
+
+      /* Comparison result annotation */
+      if (mid >= 0 && state !== 'found' && state !== 'init' && state !== 'update') {
+        const cx = startX + mid * boxW + boxW / 2;
+        const compY = boxY - 52;
+        let compText = '', compColor = '';
+        if (state === 'check_mid') {
+          compText = `${ARR[mid]} vs ${TARGET}`;
+          compColor = C.yellow;
+        } else if (state === 'go_right') {
+          compText = `${ARR[mid]} < ${TARGET} → go right`;
+          compColor = C.teal;
+        } else if (state === 'go_left') {
+          compText = `${ARR[mid]} > ${TARGET} → go left`;
+          compColor = C.orange;
+        }
+        if (compText) {
+          ctx.fillStyle = 'rgba(28,26,22,0.12)';
+          const tw = ctx.measureText(compText).width + 20;
+          roundRect(ctx, cx - tw / 2, compY - 11, tw, 22, 5);
+          ctx.fill();
+          centreText(ctx, compText, cx, compY, {
+            font: '11px "Newsreader", Georgia, serif',
+            color: compColor
+          });
+        }
+      }
+
+      /* Target badge top-right */
+      ctx.fillStyle = 'rgba(151,113,26,0.12)';
+      roundRect(ctx, W - 120, 14, 108, 30, 6); ctx.fill();
+      ctx.strokeStyle = 'rgba(151,113,26,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+      centreText(ctx, `target: ${TARGET}`, W - 66, 24, {
+        font: '10px SF Mono, monospace',
+        color: 'rgba(28,26,22,0.4)'
+      });
+      centreText(ctx, String(TARGET), W - 66, 37, {
+        font: 'bold 14px "Newsreader", Georgia, serif',
+        color: C.yellow
+      });
+
+      /* Iteration badge top-left */
+      const iterCount = steps.filter((s, si) => s.state === 'check_mid' && si <= steps.indexOf(step)).length;
+      if (iterCount > 0) {
+        ctx.fillStyle = 'rgba(28,26,22,0.08)';
+        roundRect(ctx, 14, 14, 100, 26, 6); ctx.fill();
+        ctx.strokeStyle = 'rgba(28,26,22,0.14)'; ctx.lineWidth = 1; ctx.stroke();
+        centreText(ctx, `iteration ${iterCount}`, 64, 27, {
+          font: '11px "Newsreader", Georgia, serif',
+          color: 'rgba(28,26,22,0.4)'
+        });
+      }
+
+      /* Found celebration */
+      if (state === 'found') {
+        ctx.fillStyle = 'rgba(75,107,78,0.12)';
+        roundRect(ctx, W / 2 - 90, H - 56, 180, 32, 8); ctx.fill();
+        ctx.strokeStyle = C.green; ctx.lineWidth = 1.5; ctx.stroke();
+        centreText(ctx, `Found ${TARGET} at index ${foundIdx}!`, W / 2, H - 40, {
+          font: 'bold 13px "Newsreader", Georgia, serif',
+          color: C.green
+        });
+      }
+    }
+
+    /* ── Boot ── */
+    const { ctx, W, H } = setupCanvas('canvas');
+    const ctrl = new AlgoController({ ctx, W, H, steps, draw });
+  </script>
+</body>
+</html>

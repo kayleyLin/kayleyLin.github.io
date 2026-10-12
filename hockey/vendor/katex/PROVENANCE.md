@@ -41,7 +41,7 @@ Dropped:
 ## Reproduction
 
 ```bash
-cd /Users/leo/Downloads/projects/kayley/hockey-model
+cd <repo root>
 TMP=$(mktemp -d)
 curl -sL -o "$TMP/katex.tar.gz" https://github.com/KaTeX/KaTeX/releases/download/v0.16.9/katex.tar.gz
 tar xzf "$TMP/katex.tar.gz" -C "$TMP"

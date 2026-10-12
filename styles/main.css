@@ -205,6 +205,36 @@ a.thumb figcaption { color: var(--rust); display: flex; align-items: center; gap
 }
 .link.live { margin-left: 18px; }
 
+/* Project 03 is unsubmitted IB coursework. Its figures are all results, so
+   the card holds a marked gap rather than a picture until the session ends. */
+.thumb.withheld { display: block; }
+.withheld-box {
+  aspect-ratio: 4 / 3;
+  border: 1.5px dashed var(--rule);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.withheld-box span {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.9;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.withheld-cap {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
 @media (max-width: 860px) {
   .entry { grid-template-columns: 1fr; gap: 24px; }
   .thumb { order: -1; }

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/main.css?v=95b6d20b" />
+  <link rel="stylesheet" href="styles/main.css?v=aa43162c" />
 </head>
 <body>
 
@@ -34,20 +34,19 @@
 
   <!-- ══ HERO ══════════════════════════════════════════ -->
   <section class="hero">
-    <p class="mono" style="margin-bottom:18px;">Grade 12 · Shanghai Pinghe Bilingual School</p>
+    <p class="mono" style="margin-bottom:18px;">Grade 12 · Shanghai Pinghe School</p>
     <h1>Kayley <em>Lin</em></h1>
     <p class="sub">
-      I am in my final year at Shanghai Pinghe Bilingual School. I dance, I play floorball
-      for the Pinghe Dragons, and for the past four years I have taught programming to
-      beginners at a volunteer organization in Shanghai.
+      I am in my final year at Shanghai Pinghe School. I dance, I have played floorball
+      for the Pinghe Dragons since first grade, and for the past four years I have taught
+      programming to beginners at a volunteer organization in Shanghai.
     </p>
     <p class="sub">
-      The projects collected here were not planned as a set. A shot model built on NHL
-      data, a study of how language models react to small changes in a prompt, a
-      quantization problem in a mathematics essay. Different subjects, and underneath them
-      the same short list of questions about noise, measurement, and what a system's
-      behaviour is actually made of. Somewhere in the middle of them I noticed that I care
-      much more about the mechanism underneath than about the application on top.
+      The projects here were not planned as a set. A shot model built on NHL data, a study
+      of how language models react to small changes in a prompt, a quantization problem in
+      a mathematics essay. <b>Underneath them is the same short list of questions about
+      noise, measurement, and what a system's behaviour is actually made of</b>, and each
+      one ends up asking what its measurement can and cannot resolve.
     </p>
     <p class="sub">
       I do not have a narrow specialism yet and would rather not claim one. What I do think
@@ -55,114 +54,143 @@
       which questions are worth attempting at all, and I would like to be working where
       that matters.
     </p>
-    <p class="sub faint">
-      If these share anything, it is that each one ends up asking what its measurement can
-      and cannot resolve. The NHL model's ceiling turns out to be a missing variable rather
-      than a weak algorithm. The Extended Essay asks how coarse a step you can take before
-      the signal is gone. Pioneer separates a real effect from the sampler's own noise. The
-      teaching pages ask the same thing about a person: where does an explanation stop
-      resolving, and for whom.
-    </p>
   </section>
 
   <!-- ══ SECTION INTRO ══════════════════════════════════ -->
   <div class="section-head">
     <p class="mono">Projects</p>
     <h2>Six of them.</h2>
-    <p>Read them in any order. They reference each other more than they follow a timeline.</p>
+    <p>Read them in any order. They reference each other more than they follow a timeline.
+       Three of them open something you can actually run.</p>
   </div>
 
   <!-- ══ ENTRIES ════════════════════════════════════════ -->
   <section class="entries">
 
     <article class="entry" id="f1">
-      <p class="meta"><span class="idx">01</span>Floorball · Pinghe Dragons · 2018 to 2025</p>
-      <h3 class="q">Seven seasons on <span class="qk">the floor</span></h3>
-      <p class="body">
-        Speed, angle, distance, screening, reaction window. On the floor these are things
-        you feel going wrong slightly before they go wrong, which makes them intuitions
-        rather than evidence. Everything downstream of this page is an attempt to find out
-        which of them survive being made precise, and which turn out to be unmeasurable
-        with the data that actually exists.
-      </p>
-      <p class="facts">2022 Shanghai schools championship · 2025 national youth championship</p>
-      <a class="link" href="pages/floorball.html"><span class="arr">→</span> read it</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">01</span>Floorball · Pinghe Dragons · 2017 to 2026</p>
+        <h3 class="q">Ten years on <span class="qk">the floor</span></h3>
+        <p class="body">
+          Speed, angle, distance, screening, reaction window. On the floor these are things
+          you feel going wrong slightly before they go wrong, which makes them
+          <b>intuitions rather than evidence</b>. Everything downstream of this page is an
+          attempt to find out which of them survive being made precise.
+        </p>
+        <p class="facts">2022 Shanghai schools championship · 2025 national youth championship</p>
+        <a class="link" href="pages/floorball.html"><span class="arr">→</span> read it</a>
+      </div>
+      <figure class="thumb">
+        <img src="public/assets/about/match-2022@800.jpg" loading="lazy"
+             alt="A player in an orange bib driving forward with a stick during a match." />
+        <figcaption>2022 Shanghai schools championship</figcaption>
+      </figure>
     </article>
 
     <article class="entry" id="f2">
-      <p class="meta"><span class="idx">02</span>NHL shot modelling · 956,147 attempts</p>
-      <h3 class="q">A shot model, and <span class="qk">the ceiling</span> it hit</h3>
-      <p class="body">
-        Five models, scored on 200,820 held-out shots. They land within half a percentage
-        point of each other. That is the finding rather than the disappointment: all five
-        are trained on the same features, and goalkeeper position, defender angle and
-        screening are not among them. The limit is the data, not the architecture.
-      </p>
-      <p class="facts">ensemble AUC 0.7705 · 200,820 held-out shots · RK4 ballistics · interactive instrument</p>
-      <a class="link" href="pages/nhl.html"><span class="arr">→</span> read it</a>
-      <br>
-      <a class="link" href="hockey/index.html" target="_blank" rel="noopener" style="margin-top:10px"><span class="arr">→</span> or open the interactive model directly</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">02</span>NHL shot modelling · 956,147 attempts</p>
+        <h3 class="q">A shot model, and <span class="qk">the ceiling</span> it hit</h3>
+        <p class="body">
+          Five models, scored on 200,820 held-out shots, landing within half a percentage
+          point of each other. That is the finding rather than the disappointment: all five
+          are trained on the same features, and goalkeeper position, defender angle and
+          screening are not among them. <b>The limit is the data, not the architecture.</b>
+        </p>
+        <p class="facts">ensemble AUC 0.7705 · 200,820 held-out shots · RK4 ballistics</p>
+        <a class="link" href="pages/nhl.html"><span class="arr">→</span> read it</a>
+        <a class="link live" href="hockey/index.html" target="_blank" rel="noopener"><span class="arr">→</span> or open the interactive model</a>
+      </div>
+      <a class="thumb is-live" href="hockey/index.html" target="_blank" rel="noopener">
+        <img src="public/assets/hockey-instrument.jpg" loading="lazy"
+             alt="The interactive model: drag shot distance and angle, and the goal-probability curve answers back." />
+        <figcaption><span class="dot"></span>interactive</figcaption>
+      </a>
     </article>
 
     <article class="entry" id="f3">
-      <p class="meta"><span class="idx">03</span>IB Mathematics Extended Essay · May 2026</p>
-      <h3 class="q">A ratio that does not depend on <span class="qk">the noise</span></h3>
-      <p class="body">
-        Force a time series to move in fixed steps instead of arbitrary ones and you remove
-        some of its jitter. How much turns out not to depend on how noisy the series was to
-        begin with: the constrained oscillation and the unconstrained baseline both scale
-        with the noise level in exactly the same way, so it divides out. Three lines of
-        algebra, found by doing the derivation rather than by expecting it. One conjecture
-        in the paper is still unproven and is labelled as such.
-      </p>
-      <p class="facts">4 theorems · 1 open conjecture · 500,000-sample check at 0.21% error</p>
-      <a class="link" href="pages/ee.html"><span class="arr">→</span> read it</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">03</span>IB Mathematics Extended Essay · May 2026</p>
+        <h3 class="q">A ratio that does not depend on <span class="qk">the noise</span></h3>
+        <p class="body">
+          Force a time series to move in fixed steps instead of arbitrary ones and you
+          remove some of its jitter. <b>How much turns out not to depend on how noisy the
+          series was to begin with</b>, because the noise level cancels. Three lines of
+          algebra, found by doing the derivation rather than by expecting it.
+        </p>
+        <p class="facts">4 theorems · 1 open conjecture · 500,000-sample check at 0.21% error</p>
+        <a class="link" href="pages/ee.html"><span class="arr">→</span> read it</a>
+      </div>
+      <figure class="thumb">
+        <img src="public/assets/ee-ratio.png" loading="lazy"
+             alt="The reduction ratio R plotted against step size u, rising to a peak just below one and falling away." />
+        <figcaption>R(u), peaking at 0.958, never reaching 1</figcaption>
+      </figure>
     </article>
 
     <article class="entry" id="f4">
-      <p class="meta"><span class="idx">04</span>Pioneer Research · LLM output stability</p>
-      <h3 class="q">Separating a real effect from <span class="qk">the sampler</span></h3>
-      <p class="body">
-        Five kinds of meaning-preserving prompt change, applied to 200 items across four
-        tasks, five generations each. The model already answers differently every time it
-        is asked, so most of any observed difference is the sampler rather than the change
-        being tested. The decomposition pulls the two apart. Rephrasing moves the centre
-        furthest in all four tasks and holds in 11 of 12 profiles across three models. The
-        twelfth is unresolved, and the paper says so.
-      </p>
-      <p class="facts">
-        GPT-4o-mini · qwen-plus · Llama-3-8B · 32-page paper ·
-        <a href="https://github.com/kayleyLin/Pioneer">GitHub ↗</a>
-      </p>
-      <a class="link" href="pages/pioneer.html"><span class="arr">→</span> read it</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">04</span>Pioneer Research · LLM output stability</p>
+        <h3 class="q">Separating a real effect from <span class="qk">the sampler</span></h3>
+        <p class="body">
+          Five kinds of meaning-preserving prompt change, applied to 200 items across four
+          tasks, five generations each. <b>The model already answers differently every time
+          it is asked</b>, so most of any observed difference is the sampler rather than the
+          change being tested. The decomposition pulls the two apart.
+        </p>
+        <p class="facts">
+          GPT-4o-mini · qwen-plus · Llama-3-8B · 32-page paper ·
+          <a href="https://github.com/kayleyLin/Pioneer">GitHub ↗</a>
+        </p>
+        <a class="link" href="pages/pioneer.html"><span class="arr">→</span> read it</a>
+      </div>
+      <figure class="thumb">
+        <img src="public/assets/pioneer-study-design.png" loading="lazy"
+             alt="The study design, from prompt conditions through repeated outputs to inference." />
+        <figcaption>Study design, four stages</figcaption>
+      </figure>
     </article>
 
     <article class="entry" id="f5">
-      <p class="meta"><span class="idx">05</span>Stepping-Stones · 铺路石 · Shanghai · four years</p>
-      <h3 class="q">Teaching, and the <span class="qk">scheduling problem</span> behind it</h3>
-      <p class="body">
-        Four years teaching Java to beginners, more than fifty students. Every analogy fails
-        for some student at some point, so the failure point gets written into the lesson
-        rather than discovered live. Afterwards the organization needed something else: a
-        way to assign forty volunteers to thirty classes, where living nearby is worth
-        nothing if the time is wrong.
-      </p>
-      <p class="facts">
-        16 algorithm visualisers · min-cost flow and CP-SAT, cross-checked ·
-        <a href="https://github.com/kayleyLin/Stepping-Stones">GitHub ↗</a>
-      </p>
-      <a class="link" href="pages/stepping-stones.html"><span class="arr">→</span> read it</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">05</span>Stepping-Stones · 铺路石 · Shanghai · four years</p>
+        <h3 class="q">Teaching, and the <span class="qk">scheduling problem</span> behind it</h3>
+        <p class="body">
+          Four years teaching Java to beginners, more than fifty students. <b>Every analogy
+          fails for some student at some point</b>, so the failure point gets written into
+          the lesson rather than discovered live. Afterwards the organization needed
+          something else: a way to assign forty volunteers to thirty classes.
+        </p>
+        <p class="facts">
+          16 algorithm visualisers · min-cost flow and CP-SAT, cross-checked ·
+          <a href="https://github.com/kayleyLin/Stepping-Stones">GitHub ↗</a>
+        </p>
+        <a class="link" href="pages/stepping-stones.html"><span class="arr">→</span> read it</a>
+        <a class="link live" href="pages/algorithms/dijkstra.html"><span class="arr">→</span> or open an algorithm visualiser</a>
+      </div>
+      <a class="thumb is-live" href="pages/algorithms/dijkstra.html">
+        <img src="public/assets/algo-visualiser.jpg" loading="lazy"
+             alt="An algorithm visualiser: a weighted graph on the left, pseudocode and a distance table stepping through on the right." />
+        <figcaption><span class="dot"></span>interactive</figcaption>
+      </a>
     </article>
 
     <article class="entry" id="f6">
-      <p class="meta"><span class="idx">06</span>About</p>
-      <h3 class="q">The rest of <span class="qk">it</span></h3>
-      <p class="body">
-        A rink, a stage, a classroom, and the people who were standing there at the time.
-        Including two photographs taken seven years apart with the same coach in both.
-      </p>
-      <p class="facts">floorball · dance · teaching</p>
-      <a class="link" href="pages/about.html"><span class="arr">→</span> see the gallery</a>
+      <div class="entry-text">
+        <p class="meta"><span class="idx">06</span>About</p>
+        <h3 class="q">The rest of <span class="qk">it</span></h3>
+        <p class="body">
+          A rink, a stage, a classroom, and the people who were standing there at the time.
+          Including two photographs taken seven years apart with the same coach in both.
+        </p>
+        <p class="facts">floorball · dance · teaching</p>
+        <a class="link" href="pages/about.html"><span class="arr">→</span> see the gallery</a>
+      </div>
+      <figure class="thumb">
+        <img src="public/assets/about/coach-2018@800.jpg" loading="lazy"
+             alt="A young player holding a medal, standing beside her coach after a tournament." />
+        <figcaption>2018, first medal</figcaption>
+      </figure>
     </article>
 
   </section>

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../styles/main.css?v=95b6d20b" />
+  <link rel="stylesheet" href="../styles/main.css?v=aa43162c" />
 </head>
 <body>
 
@@ -79,16 +79,15 @@
       </table>
 
       <p>
-        The spread across the four single models is 0.005 of ROC-AUC. A gradient-boosted
+        <b>The spread across the four single models is 0.005 of ROC-AUC.</b> A gradient-boosted
         tree reading a flat feature table and a Transformer reading event sequences
         disagree by less than I would expect between two reruns with different seeds.
       </p>
       <p>
         The ensemble buys about four thousandths of AUC over the best single model and pays
         for it in calibration: its expected calibration error is roughly twice the
-        Transformer's. If the question is how to rank shots, the ensemble wins narrowly. If
-        the question is whether a stated 8% chance really happens 8% of the time, it is the
-        worst of the five. The XGBoost baseline is deliberately trained without class
+        Transformer's. If the question is how to rank shots, the ensemble wins narrowly. <b>If the question is whether a stated 8% chance really happens 8% of the time, it
+        is the worst of the five.</b> The XGBoost baseline is deliberately trained without class
         weighting so that it stays a clean reference point rather than a tuned competitor.
       </p>
     </div>
@@ -111,11 +110,10 @@
             lateral passes, or any player tracking data. None of it is in the source.</li>
       </ul>
       <p>
-        That last line is the whole result. A player on the floor tracks the goalkeeper's
+        <b>That last line is the whole result.</b> A player on the floor tracks the goalkeeper's
         position, the defender's angle and whether the view is screened, continuously and
-        without effort. Not one of those is a column here. Five architectures converge on
-        the same number because the features are what is limiting them, not the
-        architecture. Another layer would not have helped.
+        without effort. Not one of those is a column here. <b>Five architectures converge on the same number because the features are what is
+        limiting them, not the architecture.</b> Another layer would not have helped.
       </p>
     </div>
 
@@ -168,8 +166,8 @@
       <p>
         The third row is the one that is easiest to misread and hardest to resist
         misreading. Perturbing a feature and watching the prediction move tells you about
-        the function that was fitted. It does not tell you what would happen on the ice if
-        that feature actually changed. Keeping those two apart is most of the work.
+        the function that was fitted. <b>It does not tell you what would happen on the ice
+        if that feature actually changed.</b> Keeping those two apart is most of the work.
       </p>
     </div>
 

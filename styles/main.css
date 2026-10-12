@@ -167,6 +167,49 @@ nav a:hover { color: var(--rust); }
   position: relative;
 }
 .entry:first-child { border-top: 1.5px solid var(--ink); }
+
+/* Each notebook entry carries the lead image of the page it opens, so the
+   card and the page are recognisably the same thing. The two interactive
+   ones are links rather than figures: the thumbnail is the way in. */
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 48px;
+  align-items: start;
+}
+.entry-text { min-width: 0; }
+.thumb { margin: 0; display: block; }
+.thumb img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.thumb figcaption {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+a.thumb { transition: transform .25s var(--ease); }
+a.thumb:hover { transform: translateY(-2px); }
+a.thumb:hover img { border-color: var(--rust); }
+a.thumb figcaption { color: var(--rust); display: flex; align-items: center; gap: 7px; }
+.thumb .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--rust); display: inline-block; flex: none;
+}
+.link.live { margin-left: 18px; }
+
+@media (max-width: 860px) {
+  .entry { grid-template-columns: 1fr; gap: 24px; }
+  .thumb { order: -1; }
+  .link.live { margin-left: 0; display: flex; }
+}
 .idx {
   font-family: var(--mono);
   font-size: 12px;

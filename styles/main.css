@@ -205,6 +205,26 @@ a.thumb figcaption { color: var(--rust); display: flex; align-items: center; gap
 }
 .link.live { margin-left: 18px; }
 
+/* A video sits on the same column as the prose, loads nothing until it is
+   asked for, and keeps the poster frame as its resting state. */
+.video-block { margin: 34px 0 0; }
+.video-block video {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: #141210;
+  border: 1px solid var(--rule);
+}
+.video-block figcaption {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin-top: 12px;
+  max-width: var(--measure);
+}
+.video-block figcaption b { color: var(--ink); font-weight: 500; }
+
 @media (max-width: 860px) {
   .entry { grid-template-columns: 1fr; gap: 24px; }
   .thumb { order: -1; }
